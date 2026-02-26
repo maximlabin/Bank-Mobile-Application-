@@ -1,4 +1,8 @@
 package com.labin.piggybank.ui.model
 
-class Transaction {
-}
+data class Transaction(
+    val id: String,
+    val description: String,
+    val amount: Double,
+    val isIncome: Boolean
+)

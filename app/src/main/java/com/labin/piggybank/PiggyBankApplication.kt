@@ -1,4 +1,9 @@
 package com.labin.piggybank
 
-class PiggyBankApplication {
+import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
+
+@HiltAndroidApp
+class PiggyBankApplication : Application() {
+
 }

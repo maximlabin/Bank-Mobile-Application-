@@ -1,6 +1,4 @@
 package com.labin.piggybank.ui.theme
-
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -34,24 +32,22 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun PiggyBankTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+fun Theme(
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    // Вычисляем, темная ли тема на самом деле
+    val isDark = when (themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
+    // Определяем цвета (LightColors / DarkColors)
+    val colors = if (isDark) DarkColorScheme else LightColorScheme
+
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = colors,
         typography = Typography,
         content = content
     )

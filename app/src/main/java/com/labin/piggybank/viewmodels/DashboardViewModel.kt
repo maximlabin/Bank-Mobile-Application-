@@ -3,31 +3,22 @@ package com.labin.piggybank.viewmodels
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.labin.piggybank.data.HomeRepository
+import com.labin.piggybank.ui.model.HomeUiState
+import com.labin.piggybank.ui.model.PieChartData
+import com.labin.piggybank.ui.model.Transaction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-data class PieChartData(
-    val amount: Double,
-    val color: Color,
-    val label: String
-)
-
-data class HomeUiState(
-    val balance: Double = 0.0,
-    val lastTransactions: List<Transaction> = emptyList(),
-    val cardNumber: Int = 0,
-    val categories: List<PieChartData> = emptyList()
-)
-
-data class Transaction(
-    val id: String,
-    val description: String,
-    val amount: Double,
-    val isIncome: Boolean
-)
-
-class DashboardViewModel : ViewModel() {
+@HiltViewModel
+class DashboardViewModel @Inject constructor(
+    private val repository: HomeRepository
+): ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState
 
@@ -35,29 +26,23 @@ class DashboardViewModel : ViewModel() {
         loadData()
     }
 
-    val mockCategories = listOf(
-        PieChartData(40.00, Color(0xFF4CAF50), "Категория A"),
-        PieChartData(25.79, Color(0xFF2196F3), "Категория B"),
-        PieChartData(20.89, Color(0xFFFFC107), "Категория C"),
-        PieChartData(30.89, Color(0xFFF44336), "Категория D")
-    )
-
     private fun loadData() {
-        // Здесь загружай данные из Repository
         viewModelScope.launch {
-            val mockData = HomeUiState(
-                balance = 12500.75,
-                cardNumber = 2344,
-                lastTransactions = listOf(
-                    Transaction("1", "Зарплата", 50000.0, true),
-                    Transaction("2", "Продукты", -2500.0, false),
-                    Transaction("3", "Подписка", -499.0, false)
-                ),
-                categories = mockCategories
-            )
-
-
-            _uiState.value = mockData
+            combine(
+                flowOf(12500.75), // balance — можно тоже из репозитория
+                flowOf(2344),     // cardNumber — из настроек или профиля
+                repository.getLastTransactions(),
+                repository.getCategoryPieData()
+            ) { balance, cardNumber, transactions, categories ->
+                HomeUiState(
+                    balance = balance,
+                    cardNumber = cardNumber,
+                    lastTransactions = transactions,
+                    categories = categories
+                )
+            }.collect { state ->
+                _uiState.value = state
+            }
         }
     }
 }

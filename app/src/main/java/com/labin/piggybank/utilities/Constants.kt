@@ -1,4 +1,7 @@
 package com.labin.piggybank.utilities
 
-class Constants {
-}
+/**
+* Constants used throughout the app.
+**/
+
+const val DATABASE_NAME = "data-db"
