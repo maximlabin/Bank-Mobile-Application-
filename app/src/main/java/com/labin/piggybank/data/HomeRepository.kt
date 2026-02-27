@@ -18,4 +18,8 @@ class HomeRepository @Inject constructor(
     fun getCategoryPieData(): Flow<List<PieChartData>> =
         transactionDao.getCategoryExpenses()
             .map { expenses -> CategoryMapper.toPieChartData(expenses) }
+
+    suspend fun saveTransaction(transaction: TransactionEntity) {
+        transactionDao.insert(transaction)
+    }
 }

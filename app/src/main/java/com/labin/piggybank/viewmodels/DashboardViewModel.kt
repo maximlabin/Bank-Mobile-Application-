@@ -3,6 +3,8 @@ package com.labin.piggybank.viewmodels
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.labin.piggybank.compose.homepage.TransactionItem
+import com.labin.piggybank.compose.operation.Category
 import com.labin.piggybank.data.HomeRepository
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
@@ -29,8 +31,8 @@ class DashboardViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             combine(
-                flowOf(12500.75), // balance — можно тоже из репозитория
-                flowOf(2344),     // cardNumber — из настроек или профиля
+                flowOf(12500.75),
+                flowOf(2344),
                 repository.getLastTransactions(),
                 repository.getCategoryPieData()
             ) { balance, cardNumber, transactions, categories ->

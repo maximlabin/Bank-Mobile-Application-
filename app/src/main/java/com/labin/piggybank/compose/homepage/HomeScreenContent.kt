@@ -53,8 +53,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
@@ -70,7 +68,6 @@ fun HomeScreenContent(
     //onEvent: (DashboardEvent) -> Unit,
     navController: NavController,
     modifier: Modifier = Modifier,
-
 ) {
     Box(
         modifier = Modifier
@@ -285,10 +282,6 @@ fun PieChart(
     outlineWidth: Dp = 5.dp,
     onSliceClick: (PieChartData) -> Unit = {}
 ) {
-    // Вычисляем общий баланс из данных
-    val totalAmount = data.sumOf { it.amount }.toFloat()
-
-    // Запоминаем ВЫБРАННУЮ КАТЕГОРИЮ
     var selectedCategory by remember { mutableStateOf<PieChartData?>(null) }
 
     Canvas(
@@ -309,11 +302,8 @@ fun PieChart(
 
                         var startAngle = 0f
                         for (item in data) {
-                            val sweepAngle = if (totalAmount > 0f) {
-                                (item.amount.toFloat() / totalAmount) * 360f
-                            } else {
-                                0f
-                            }
+                            // ✅ Используем готовый процент!
+                            val sweepAngle = item.percentage.toFloat() * 3.6f
                             val endAngle = startAngle + sweepAngle
 
                             val adjustedStart = (startAngle + 360) % 360
@@ -326,12 +316,10 @@ fun PieChart(
                             }
 
                             if (inRange) {
-                                selectedCategory = item // ← запоминаем категорию
-                                Log.d("PieChart", "Клик по: ${item.label}, сумма = ${item.amount}")
+                                selectedCategory = item
                                 onSliceClick(item)
                                 return@detectTapGestures
                             }
-
                             startAngle = endAngle
                         }
                     }
@@ -344,13 +332,9 @@ fun PieChart(
         val innerCircleRadius = size * 0.35f
         var startAngle = -90f
 
-        // Рисуем сегменты
         for (item in data) {
-            val sweepAngle = if (totalAmount > 0f) {
-                (item.amount.toFloat() / totalAmount) * 360f
-            } else {
-                0f
-            }
+            // ✅ Берём угол из процента
+            val sweepAngle = item.percentage.toFloat() * 3.6f
 
             val isSelected = selectedCategory == item
             val offset = if (isSelected) {
@@ -389,18 +373,17 @@ fun PieChart(
             startAngle += sweepAngle
         }
 
-        // Рисуем чёрный центр
+        // Рисуем центр
         drawCircle(
             color = Color.Black,
             radius = innerCircleRadius,
             center = center
         )
 
-        // 🔥 В центре: если выбрана категория — её сумма, иначе — общий баланс
         val centerText = if (selectedCategory != null) {
-            "${selectedCategory!!.amount} ₽"
+            "${selectedCategory!!.amount.toInt()} ₽"
         } else {
-            "${totalAmount} ₽"
+            "${data.sumOf { it.amount }.toInt()} ₽"
         }
 
         drawCenteredText(

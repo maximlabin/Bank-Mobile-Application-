@@ -7,7 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.compose.homepage.HomeScreen
-import com.labin.piggybank.compose.operation.NewOperation
+import com.labin.piggybank.compose.operation.NewOperationScreen
 import com.labin.piggybank.compose.profile.ProfileScreen
 
 
@@ -42,8 +42,8 @@ fun PiggyBankNavHost (
         }
         composable(route = "newOperation/{userId}") {
             backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            NewOperation(
+            val userId = backStackEntry.arguments?.getLong("userId") ?: 0L
+            NewOperationScreen(
                 userId = userId,
                 navController = navController
             )

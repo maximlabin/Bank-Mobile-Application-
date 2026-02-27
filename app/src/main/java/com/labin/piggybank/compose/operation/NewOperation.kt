@@ -1,10 +1,12 @@
 package com.labin.piggybank.compose.operation
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,11 +18,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,8 +46,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.labin.piggybank.viewmodels.TransactionViewModel
 
 
 data class Category(
@@ -54,7 +61,11 @@ data class Category(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewOperation(userId: String, navController: NavController) {
+fun NewOperation(
+    userId: Long,
+    navController: NavController,
+    viewModel: TransactionViewModel
+) {
     var amount by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
 
@@ -63,7 +74,9 @@ fun NewOperation(userId: String, navController: NavController) {
         Category("Жилье", Icons.Default.Home, Color(0xFF4CAF50)),
         Category("Развлечения", Icons.Default.Movie, Color(0xFFE91E63)),
         Category("Здоровье", Icons.Default.Favorite, Color(0xFFF44336)),
-        Category("Подарки", Icons.Default.CardGiftcard, Color(0xFF9C27B0))
+        Category("Подарки", Icons.Default.CardGiftcard, Color(0xFF9C27B0)),
+        Category("Другое", Icons.Default.QuestionMark, Color(0xFF31312E)),
+        Category("Создать", Icons.Default.Add, Color(0x8AACAC03))
     )
 
     Scaffold(
@@ -112,7 +125,10 @@ fun NewOperation(userId: String, navController: NavController) {
             }
 
             Button(
-                onClick = {  },
+                onClick = {
+                    viewModel.saveTransaction(userId = userId, amount = amount, category = selectedCategory )
+                    println("Click")
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -163,5 +179,21 @@ fun CategoryItem(
 @Preview(showBackground = true)
 @Composable
 fun NewOperationScreenPreview() {
-    NewOperation(userId = "123", navController = rememberNavController())
+    NewOperation(
+        userId = 1232134L, navController = rememberNavController(),
+        viewModel = TODO()
+    )
+}
+
+@Composable
+fun NewOperationScreen(
+    userId: Long,
+    navController: NavController,
+    viewModel: TransactionViewModel = hiltViewModel()
+) {
+    NewOperation(
+        userId=userId,
+        navController,
+        viewModel = viewModel
+    )
 }

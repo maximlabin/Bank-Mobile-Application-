@@ -1,6 +1,8 @@
 package com.labin.piggybank.data
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -14,11 +16,14 @@ interface TransactionDao {
             categoryName AS category,
             SUM(amount) AS totalAmount
         FROM transactions 
-        WHERE amount < 0 
+        WHERE IsIncome = 0
         GROUP BY categoryName
         ORDER BY totalAmount ASC
     """)
     fun getCategoryExpenses(): Flow<List<CategoryExpense>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(transaction: TransactionEntity)
 }
 
 data class CategoryExpense(

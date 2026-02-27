@@ -5,8 +5,9 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "transactions")
 data class TransactionEntity(
-    @PrimaryKey
-    val id: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val userId: Long,
     val description: String,
     val amount: Double,
     val isIncome: Boolean,

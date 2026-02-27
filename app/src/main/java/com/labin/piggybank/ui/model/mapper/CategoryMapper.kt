@@ -14,14 +14,16 @@ object CategoryMapper {
 
     fun toPieChartData(expenses: List<CategoryExpense>): List<PieChartData> {
         val total = expenses.sumOf { it.totalAmount }.absoluteValue
+        if (total == 0.0) return emptyList()
 
         return expenses.map { expense ->
             val percentage = (expense.totalAmount.absoluteValue / total) * 100
             val color = colorMap[expense.category] ?: Color.Gray
 
             PieChartData(
-                amount = percentage,
+                amount = expense.totalAmount,
                 color = color,
+                percentage=percentage,
                 label = expense.category
             )
         }

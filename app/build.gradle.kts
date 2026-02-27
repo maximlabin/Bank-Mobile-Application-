@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.animation.core.lint)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.junit.ktx)
+    implementation(libs.androidx.compose.foundation.layout)
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.core.ktx)
