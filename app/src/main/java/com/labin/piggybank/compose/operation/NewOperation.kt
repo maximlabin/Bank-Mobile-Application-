@@ -127,7 +127,7 @@ fun NewOperation(
             Button(
                 onClick = {
                     viewModel.saveTransaction(userId = userId, amount = amount, category = selectedCategory )
-                    println("Click")
+                    navController.popBackStack()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
