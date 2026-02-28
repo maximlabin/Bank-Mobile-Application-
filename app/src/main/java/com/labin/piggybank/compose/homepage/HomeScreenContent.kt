@@ -1,8 +1,6 @@
 package com.labin.piggybank.compose.homepage
 
-import android.R.attr.onClick
 import android.text.TextPaint
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -21,16 +19,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,90 +53,139 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
 import com.labin.piggybank.ui.model.Transaction
+import com.labin.piggybank.ui.theme.ThemeMode
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(),
+        navController = rememberNavController(),
+    )
+}
+
+
 @Composable
 fun HomeScreenContent(
     uiState: HomeUiState,
-    //onEvent: (DashboardEvent) -> Unit,
     navController: NavController,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 0.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(
+                start = 16.dp,
+                top = 32.dp,
+                end = 16.dp,
+                bottom = 0.dp
+            ),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(vertical = 24.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        val options = listOf(TransactionType.EXPENSE, TransactionType.INCOME)
+
+        var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
+
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            PieChart(
-                data = uiState.categories,
-                modifier = Modifier.size(250.dp),
-            )
+            options.forEachIndexed { index, type ->
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    onClick = {
+                        selectedType = type
+                        uiState.onTypeSelected(type) },
+                    selected = selectedType == type
+                ) {
+                    Text(
+                        text = when (type) {
+                            TransactionType.EXPENSE -> "Расходы"
+                            TransactionType.INCOME -> "Доходы"
+                        }
+                    )
+                }
+            }
         }
 
         Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 32.dp, end = 1.dp) // Исправил отступ end на 16.dp для красоты
-                .size(70.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF6200EE))
-                .zIndex(1f)
-                .clickable { navController.navigate("profile/123") },
-            contentAlignment = Alignment.Center // Центрируем иконку
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = Icons.Default.Person, // Иконка профиля
-                contentDescription = "Профиль",
-                tint = Color.White, // Белый цвет
-                modifier = Modifier.size(36.dp) // Размер иконки
-            )
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FloatingActionButton(
+                    onClick = { /* Навигация на календарь */ },
+                    modifier = Modifier.size(64.dp),
+                    containerColor = Color(0xFF6200EE)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Выбрать дату",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 215.dp, end = 1.dp)
-                .size(70.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF6200EE))
-                .zIndex(1f)
-                .clickable { navController.navigate("newOperation/123") },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Добавить операцию",
-                tint = Color.White,
-                modifier = Modifier.size(36.dp)
-            )
-        }
+                FloatingActionButton(
+                    onClick = { navController.navigate("profile/123") },
+                    modifier = Modifier.size(64.dp),
+                    containerColor = Color(0xFF6200EE)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Профиль",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
 
-//        Button(onClick = { onClick(Text("Hello")) } ) {
-//            Text("Hello")
-//        }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                PieChart(
+                    data = uiState.categories,
+                    modifier = Modifier.size(250.dp),
+                )
+            }
+
+            FloatingActionButton(
+                onClick = { navController.navigate("newOperation/123") },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd) // Прижать к правому нижнему углу Box
+                    .size(64.dp),
+                containerColor = Color(0xFF6200EE)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить операцию",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 300.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             BankCardWithBalance(
@@ -144,30 +197,19 @@ fun HomeScreenContent(
                 text = "Последние операции",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-
-                )
-
-            Text(
-                text="Категории"
             )
 
-
-
             LazyColumn(
+                modifier = Modifier.height(200.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(uiState.lastTransactions) { transaction ->
                     TransactionItem(transaction)
                 }
             }
-
-
         }
-
-
     }
 }
-
 
 @Composable
 fun BankCardWithBalance(
@@ -177,7 +219,6 @@ fun BankCardWithBalance(
 ) {
     var isShowingBalance by remember { mutableStateOf(false) }
 
-    // Анимация цвета при переключении
     val containerColor by animateColorAsState(
         targetValue = if (isShowingBalance) {
             MaterialTheme.colorScheme.primaryContainer
@@ -197,7 +238,7 @@ fun BankCardWithBalance(
     )
 
     Card(
-        shape = RoundedCornerShape(16.dp), // единая скруглённая форма
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier
             .fillMaxWidth()
             .height(180.dp)
@@ -231,7 +272,6 @@ fun BankCardWithBalance(
                     )
                 }
             } else {
-                // Режим банковской карты
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -302,7 +342,6 @@ fun PieChart(
 
                         var startAngle = 0f
                         for (item in data) {
-                            // ✅ Используем готовый процент!
                             val sweepAngle = item.percentage.toFloat() * 3.6f
                             val endAngle = startAngle + sweepAngle
 
@@ -333,7 +372,6 @@ fun PieChart(
         var startAngle = -90f
 
         for (item in data) {
-            // ✅ Берём угол из процента
             val sweepAngle = item.percentage.toFloat() * 3.6f
 
             val isSelected = selectedCategory == item

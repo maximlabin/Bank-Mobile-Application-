@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.labin.piggybank.compose.homepage.TransactionItem
+import com.labin.piggybank.compose.homepage.TransactionType
 import com.labin.piggybank.compose.operation.Category
 import com.labin.piggybank.data.HomeRepository
 import com.labin.piggybank.ui.model.HomeUiState
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -46,5 +48,9 @@ class DashboardViewModel @Inject constructor(
                 _uiState.value = state
             }
         }
+    }
+
+    fun onTypeSelected(newType: TransactionType) {
+        _uiState.update { it.copy(selectedType = newType) }
     }
 }

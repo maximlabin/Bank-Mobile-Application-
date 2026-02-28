@@ -2,15 +2,11 @@ package com.labin.piggybank.ui.model.mapper
 import androidx.compose.ui.graphics.Color
 import com.labin.piggybank.data.CategoryExpense
 import com.labin.piggybank.ui.model.PieChartData
+import com.labin.piggybank.utilities.CategoryType
 import kotlin.math.absoluteValue
 
 object CategoryMapper {
-    private val colorMap = mapOf(
-        "Продукты" to Color(0xFF4CAF50),
-        "Транспорт" to Color(0xFF2196F3),
-        "Развлечения" to Color(0xFFFFC107),
-        "Подписки" to Color(0xFFF44336)
-    )
+
 
     fun toPieChartData(expenses: List<CategoryExpense>): List<PieChartData> {
         val total = expenses.sumOf { it.totalAmount }.absoluteValue
@@ -18,7 +14,8 @@ object CategoryMapper {
 
         return expenses.map { expense ->
             val percentage = (expense.totalAmount.absoluteValue / total) * 100
-            val color = colorMap[expense.category] ?: Color.Gray
+            val categoryType = CategoryType.fromLabel(expense.category)
+            val color = categoryType?.color ?: Color.Gray
 
             PieChartData(
                 amount = expense.totalAmount,

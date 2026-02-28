@@ -31,10 +31,12 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -54,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.junit.ktx)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.ui.text)
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.core.ktx)

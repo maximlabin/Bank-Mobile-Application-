@@ -44,19 +44,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.labin.piggybank.utilities.CategoryType
 import com.labin.piggybank.viewmodels.TransactionViewModel
 
 
 data class Category(
     val name: String,
     val icon: ImageVector,
-    val color: Color
+    val color: Color,
+    val type: CategoryType? = null,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,17 +70,12 @@ fun NewOperation(
     viewModel: TransactionViewModel
 ) {
     var amount by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf(TextFieldValue("")) }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
 
-    val categories = listOf(
-        Category("Еда", Icons.Default.ShoppingCart, Color(0xFFFF9800)),
-        Category("Жилье", Icons.Default.Home, Color(0xFF4CAF50)),
-        Category("Развлечения", Icons.Default.Movie, Color(0xFFE91E63)),
-        Category("Здоровье", Icons.Default.Favorite, Color(0xFFF44336)),
-        Category("Подарки", Icons.Default.CardGiftcard, Color(0xFF9C27B0)),
-        Category("Другое", Icons.Default.QuestionMark, Color(0xFF31312E)),
-        Category("Создать", Icons.Default.Add, Color(0x8AACAC03))
-    )
+    val categories = CategoryType.entries
+        .filter { it != CategoryType.CREATE_NEW }
+        .map { it.toCategory() }
 
     Scaffold(
         topBar = {
@@ -92,13 +90,21 @@ fun NewOperation(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Поле ввода суммы
             OutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
                 label = { Text("Сумма") },
                 suffix = { Text("₽") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Описание операции") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -126,7 +132,7 @@ fun NewOperation(
 
             Button(
                 onClick = {
-                    viewModel.saveTransaction(userId = userId, amount = amount, category = selectedCategory )
+                    viewModel.saveTransaction(userId = userId, amount = amount, category = selectedCategory, description= description.text )
                     navController.popBackStack()
                 },
                 modifier = Modifier
@@ -181,7 +187,7 @@ fun CategoryItem(
 fun NewOperationScreenPreview() {
     NewOperation(
         userId = 1232134L, navController = rememberNavController(),
-        viewModel = TODO()
+        viewModel = hiltViewModel()
     )
 }
 

@@ -1,6 +1,7 @@
 package com.labin.piggybank.compose.buttons
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -16,13 +17,14 @@ import com.labin.piggybank.viewmodels.ThemeViewModel
 fun ThemeSegmentedButtons(viewModel: ThemeViewModel) {
     val themeMode by viewModel.themeModeFlow.collectAsStateWithLifecycle()
 
+    println("ThemeSegmentedButtons")
+
     ThemeSegmentedButtonsContent(
         selectedMode = themeMode,
         onModeSelected = { newMode -> viewModel.setTheme(newMode) }
     )
 }
 
-//@Preview(showBackground = true)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSegmentedButtonsContent(
@@ -50,5 +52,16 @@ fun ThemeSegmentedButtonsContent(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ThemeSegmentedButtonsContentPreview() {
+    MaterialTheme {
+        ThemeSegmentedButtonsContent(
+            selectedMode = ThemeMode.LIGHT,
+            onModeSelected = {}
+        )
     }
 }

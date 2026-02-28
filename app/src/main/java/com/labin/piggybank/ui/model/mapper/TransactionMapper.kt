@@ -7,7 +7,7 @@ import com.labin.piggybank.ui.model.Transaction as UiTransaction
 object TransactionMapper {
     fun toUi(entity: TransactionEntity): UiTransaction = UiTransaction(
         id = entity.id,
-        description = entity.description,
+        description = entity.name,
         amount = entity.amount,
         isIncome = entity.isIncome
     )

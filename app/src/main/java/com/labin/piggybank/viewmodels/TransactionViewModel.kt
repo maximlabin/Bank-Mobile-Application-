@@ -10,11 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.hamcrest.Description
 import javax.inject.Inject
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val repository: HomeRepository // Или HomeRepository, если он один
+    private val repository: HomeRepository
 ) : ViewModel() {
 
     private val _saveResult = MutableStateFlow<SaveResult?>(null)
@@ -22,6 +23,7 @@ class TransactionViewModel @Inject constructor(
 
     fun saveTransaction(
         amount: String,
+        description: String,
         category: Category?,
         userId: Long,
         isIncome: Boolean = false
@@ -37,7 +39,8 @@ class TransactionViewModel @Inject constructor(
                     ?: throw IllegalArgumentException("Неверная сумма")
 
                 val transaction = TransactionEntity(
-                    description = category.name,
+                    name = category.name,
+                    description= description,
                     amount = amountValue,
                     isIncome = isIncome,
                     categoryName = category.name,
