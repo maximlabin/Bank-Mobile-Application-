@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.labin.piggybank.data.AppDatabase
 import com.labin.piggybank.data.TransactionDao
+import com.labin.piggybank.utilities.DATABASE_NAME
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,7 @@ object DatabaseModule {
         Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "piggybank-db"
+            DATABASE_NAME
         ).build()
 
     @Provides

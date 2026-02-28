@@ -15,4 +15,4 @@ import com.labin.piggybank.compose.operation.Category
 * Constants used throughout the app.
 **/
 
-const val DATABASE_NAME = "data-db"
+const val DATABASE_NAME = "piggybank-db"

@@ -7,9 +7,10 @@ import com.labin.piggybank.ui.model.Transaction as UiTransaction
 object TransactionMapper {
     fun toUi(entity: TransactionEntity): UiTransaction = UiTransaction(
         id = entity.id,
-        description = entity.name,
+        name = entity.name,
+        description = entity.description,
         amount = entity.amount,
-        isIncome = entity.isIncome
+        isIncome = entity.isIncome,
     )
 
     fun toUiList(transactions: List<TransactionEntity>): List<UiTransaction> =

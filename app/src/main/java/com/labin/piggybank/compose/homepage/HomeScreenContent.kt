@@ -199,6 +199,22 @@ fun HomeScreenContent(
                 fontWeight = FontWeight.Bold,
             )
 
+            Row( horizontalArrangement = Arrangement.SpaceBetween,
+                 modifier = Modifier.fillMaxSize()
+                ) {
+                Text(
+                    text = "Описание",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Normal,
+                )
+
+                Text(
+                    text = "Сумма",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Normal,
+                )
+            }
+
             LazyColumn(
                 modifier = Modifier.height(200.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
