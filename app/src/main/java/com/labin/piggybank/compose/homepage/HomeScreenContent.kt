@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.mandatorySystemGesturesPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,16 +27,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,32 +63,44 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
 import com.labin.piggybank.ui.model.Transaction
+import com.labin.piggybank.domain.TransactionType
 import com.labin.piggybank.ui.theme.ThemeMode
+import com.labin.piggybank.utilities.toFormattedBalance
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     HomeScreenContent(
-        uiState = HomeUiState(),
+        uiState = HomeUiState(
+            balance = 89567.0,
+            cardNumber = 1234,
+            lastTransactions = listOf()
+        ),
         navController = rememberNavController(),
+        onDeleteTransaction = {
+            println("Preview: Delete transaction ${it.id}")
+        },
+        onTypeSelected = {}
+
     )
 }
-
 
 @Composable
 fun HomeScreenContent(
     uiState: HomeUiState,
     navController: NavController,
+    onDeleteTransaction: (Transaction) -> Unit,
+    onTypeSelected: (TransactionType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -95,11 +113,25 @@ fun HomeScreenContent(
                 end = 16.dp,
                 bottom = 0.dp
             ),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         val options = listOf(TransactionType.EXPENSE, TransactionType.INCOME)
 
         var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
+
+        Text(
+            text = "Итого",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Normal,
+        )
+
+        Text(
+            text = uiState.balance.toFormattedBalance(),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
 
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier.fillMaxWidth()
@@ -109,13 +141,14 @@ fun HomeScreenContent(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                     onClick = {
                         selectedType = type
-                        uiState.onTypeSelected(type) },
+                        onTypeSelected(type)  },
                     selected = selectedType == type
                 ) {
                     Text(
                         text = when (type) {
                             TransactionType.EXPENSE -> "Расходы"
                             TransactionType.INCOME -> "Доходы"
+                            TransactionType.TRANSFER -> "Перевод"
                         }
                     )
                 }
@@ -131,19 +164,6 @@ fun HomeScreenContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 FloatingActionButton(
-                    onClick = { /* Навигация на календарь */ },
-                    modifier = Modifier.size(64.dp),
-                    containerColor = Color(0xFF6200EE)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = "Выбрать дату",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                FloatingActionButton(
                     onClick = { navController.navigate("profile/123") },
                     modifier = Modifier.size(64.dp),
                     containerColor = Color(0xFF6200EE)
@@ -151,6 +171,19 @@ fun HomeScreenContent(
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = "Профиль",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                FloatingActionButton(
+                    onClick = { },
+                    modifier = Modifier.size(64.dp),
+                    containerColor = Color(0xFF6200EE)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Выбрать дату",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
@@ -172,7 +205,7 @@ fun HomeScreenContent(
             FloatingActionButton(
                 onClick = { navController.navigate("newOperation/123") },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd) // Прижать к правому нижнему углу Box
+                    .align(Alignment.BottomEnd)
                     .size(64.dp),
                 containerColor = Color(0xFF6200EE)
             ) {
@@ -183,15 +216,46 @@ fun HomeScreenContent(
                     modifier = Modifier.size(24.dp)
                 )
             }
+
+            FloatingActionButton(
+                onClick = { navController.navigate("calendar") },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .size(64.dp),
+                containerColor = Color(0xFF6200EE)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = "Календарь",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(
+                16.dp)
         ) {
             BankCardWithBalance(
                 cardNumber = uiState.cardNumber,
                 balance = uiState.balance
             )
+
+            FloatingActionButton(
+                onClick = { navController.navigate("account") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                containerColor = Color(0xFF6200EE)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить новый счет",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
             Text(
                 text = "Последние операции",
@@ -219,12 +283,22 @@ fun HomeScreenContent(
                 modifier = Modifier.height(200.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(uiState.lastTransactions) { transaction ->
-                    TransactionItem(transaction)
+                items(uiState.lastTransactions,
+                    key = {transaction -> transaction.id} ) { transaction ->
+                    DraggableTransactionItem(
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = null,
+                            fadeOutSpec = tween(300)
+                        ),
+                        transaction = transaction,
+                        onDelete = {
+                            onDeleteTransaction(transaction)
+                        })
+                    }
                 }
             }
+
         }
-    }
 }
 
 @Composable
@@ -257,6 +331,7 @@ fun BankCardWithBalance(
         shape = RoundedCornerShape(16.dp),
         modifier = modifier
             .fillMaxWidth()
+            .padding(top=10.dp)
             .height(180.dp)
             .clickable { isShowingBalance = !isShowingBalance },
         colors = CardDefaults.cardColors(containerColor = containerColor),
@@ -267,7 +342,6 @@ fun BankCardWithBalance(
             label = "card_content_switch"
         ) { showingBalance ->
             if (showingBalance) {
-                // Режим баланса
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -321,11 +395,63 @@ fun TransactionItem(transaction: Transaction) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(transaction.description)
+        Text(transaction.description ?: "Без описания")
         Text(
-            text = (if (transaction.isIncome) "+" else "") + "${transaction.amount} ₽",
-            color = if (transaction.isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            text = (if (transaction.type == TransactionType.INCOME) "+" else "-") +
+                    " ${transaction.amount.toPlainString()} ₽",
+            color = if (transaction.type == TransactionType.INCOME)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.error
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DraggableTransactionItem(
+    transaction: Transaction,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.StartToEnd) {
+                onDelete()
+                println("delete")
+                true
+            } else {
+                false
+            }
+        }
+    )
+    Box(modifier = modifier) {
+        SwipeToDismissBox(
+            state = dismissState,
+            enableDismissFromEndToStart = false,
+            backgroundContent = {
+                val color = when (dismissState.dismissDirection) {
+                    SwipeToDismissBoxValue.StartToEnd -> Color.Red.copy(alpha = 0.8f)
+                    else -> Color.Transparent
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color, shape = RoundedCornerShape(12.dp))
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Удалить",
+                        tint = Color.White
+                    )
+                }
+            }
+        ) {
+            TransactionItem(transaction = transaction)
+        }
     }
 }
 
@@ -427,7 +553,6 @@ fun PieChart(
             startAngle += sweepAngle
         }
 
-        // Рисуем центр
         drawCircle(
             color = Color.Black,
             radius = innerCircleRadius,
@@ -449,14 +574,12 @@ fun PieChart(
     }
 }
 
-// Вспомогательная функция для центрированного текста
 private fun DrawScope.drawCenteredText(
     text: String,
     center: Offset,
     color: Color,
     fontSize: Float
 ) {
-    // Настройка Paint для текста
     val textPaint = TextPaint().apply {
         this.color = color.toArgb()
         this.textSize = fontSize

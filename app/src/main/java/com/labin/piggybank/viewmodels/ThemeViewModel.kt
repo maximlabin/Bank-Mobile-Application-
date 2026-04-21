@@ -23,7 +23,6 @@ class ThemeViewModel @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
 
-    //preferencesKey требует указания типа, если ключ строковый - все верно
     private val THEME_KEY = stringPreferencesKey("theme_mode")
 
     val themeModeFlow: StateFlow<ThemeMode> = dataStore.data

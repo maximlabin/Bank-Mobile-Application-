@@ -13,15 +13,19 @@ import com.labin.piggybank.viewmodels.DashboardViewModel
 
 @Composable
 fun HomeScreen(
-    viewModel: DashboardViewModel = hiltViewModel(),
     navController: NavController,
-    modifier: Modifier
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     HomeScreenContent(
-        uiState = viewModel.uiState.collectAsStateWithLifecycle().value,
+        uiState = uiState,
         navController = navController,
-        modifier = modifier,
-
+        onDeleteTransaction = { transaction ->
+            viewModel.deleteTransaction(transaction.id)
+        },
+        onTypeSelected = { type ->
+            viewModel.setFilterType(type)
+        },
     )
 }

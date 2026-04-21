@@ -1,56 +1,62 @@
 package com.labin.piggybank.viewmodels
 
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.labin.piggybank.compose.homepage.TransactionItem
-import com.labin.piggybank.compose.homepage.TransactionType
-import com.labin.piggybank.compose.operation.Category
-import com.labin.piggybank.data.HomeRepository
+import com.labin.piggybank.data.AccountRepository
+import com.labin.piggybank.data.CategoryRepository
+import com.labin.piggybank.data.TransactionRepository
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
-import com.labin.piggybank.ui.model.Transaction
+import com.labin.piggybank.domain.TransactionType
+import com.labin.piggybank.domain.mapper.CategoryMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val repository: HomeRepository
-): ViewModel() {
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState
+    private val transactionRepository: TransactionRepository,
+    private val accountRepository: AccountRepository
+) : ViewModel() {
 
-    init {
-        loadData()
+    private val _selectedType = MutableStateFlow(TransactionType.EXPENSE)
+
+    private val pieDataFlow: Flow<List<PieChartData>> = _selectedType.flatMapLatest { type ->
+        transactionRepository.getCategoryStats(type)
+            .map { list -> CategoryMapper.toPieChartData(list) }
     }
 
-    private fun loadData() {
+    val uiState: StateFlow<HomeUiState> = combine(
+        transactionRepository.getBalanceFlow(),
+        transactionRepository.getLastTransactions(),
+        pieDataFlow
+    ) { balance, transactions, categories ->
+        HomeUiState(
+            balance = balance,
+            lastTransactions = transactions,
+            categories = categories
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+
+    fun setFilterType(type: TransactionType) {
+        _selectedType.value = type
+    }
+
+    fun deleteTransaction(id: Long) {
         viewModelScope.launch {
-            combine(
-                flowOf(12500.75),
-                flowOf(2344),
-                repository.getLastTransactions(),
-                repository.getCategoryPieData()
-            ) { balance, cardNumber, transactions, categories ->
-                HomeUiState(
-                    balance = balance,
-                    cardNumber = cardNumber,
-                    lastTransactions = transactions,
-                    categories = categories
-                )
-            }.collect { state ->
-                _uiState.value = state
+            try {
+                transactionRepository.deleteTransactionById(id)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
-    }
-
-    fun onTypeSelected(newType: TransactionType) {
-        _uiState.update { it.copy(selectedType = newType) }
     }
 }

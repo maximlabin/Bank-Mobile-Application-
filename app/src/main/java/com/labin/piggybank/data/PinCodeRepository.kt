@@ -1,7 +1,6 @@
 package com.labin.piggybank.data
 
 import androidx.datastore.core.DataStore
-import com.labin.piggybank.api.AuthApi
 import androidx.datastore.preferences.core.*
 import com.labin.piggybank.utilities.PinCodeManager
 import kotlinx.coroutines.flow.Flow

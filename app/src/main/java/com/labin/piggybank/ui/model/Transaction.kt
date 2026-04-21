@@ -1,9 +1,11 @@
 package com.labin.piggybank.ui.model
 
+import com.labin.piggybank.domain.TransactionType
+import java.math.BigDecimal
+
 data class Transaction(
     val id: Long,
-    val name: String,
-    val description: String,
-    val amount: Double,
-    val isIncome: Boolean
+    val description: String?,
+    val amount: BigDecimal,
+    val type: TransactionType,
 )

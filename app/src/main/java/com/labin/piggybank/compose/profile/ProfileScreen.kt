@@ -32,6 +32,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.compose.buttons.ThemeSegmentedButtons
 import com.labin.piggybank.compose.buttons.ThemeSegmentedButtonsContent
+import com.labin.piggybank.compose.report.CategoryScreen
 import com.labin.piggybank.ui.theme.ThemeMode
 import com.labin.piggybank.viewmodels.ThemeViewModel
 
@@ -92,6 +93,13 @@ fun ProfileScreenContent(
             Text("Перейти на главный экран")
         }
 
+        Button(
+            onClick = { navController.navigate("currency") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Сменить основную валюту")
+        }
+
         OutlinedButton(
             onClick = { navController.popBackStack() },
             modifier = Modifier.fillMaxWidth()
@@ -99,6 +107,7 @@ fun ProfileScreenContent(
             Text("Назад")
         }
     }
+
 }
 
 
@@ -108,7 +117,7 @@ fun ProfileScreenPreview() {
     ProfileScreenContent(
         userId = "3",
         navController = rememberNavController(),
-        currentThemeMode = ThemeMode.SYSTEM, // Просто передаем значение
-        onThemeChanged = {} // Пустая функция для превью
+        currentThemeMode = ThemeMode.SYSTEM,
+        onThemeChanged = {}
     )
 }

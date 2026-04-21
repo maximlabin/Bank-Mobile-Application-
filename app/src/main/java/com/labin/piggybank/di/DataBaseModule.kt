@@ -2,8 +2,12 @@ package com.labin.piggybank.di
 
 import android.content.Context
 import androidx.room.Room
+import com.labin.piggybank.data.AccountDao
 import com.labin.piggybank.data.AppDatabase
+import com.labin.piggybank.data.CategoryDao
+import com.labin.piggybank.data.CurrencyDao
 import com.labin.piggybank.data.TransactionDao
+import com.labin.piggybank.data.TransactionRepository
 import com.labin.piggybank.utilities.DATABASE_NAME
 import dagger.Module
 import dagger.Provides
@@ -30,8 +34,34 @@ object DatabaseModule {
     @Singleton
     fun provideTransactionDao(appDatabase: AppDatabase): TransactionDao {
         val dao = appDatabase.transactionDao()
-        println("✅ TransactionDao created!")
         return dao
     }
 
+    @Provides
+    fun provideCategoryDao(database: AppDatabase): CategoryDao {
+        return database.categoryDao()
+    }
+
+    @Provides
+    fun provideCurrencyDao(db: AppDatabase): CurrencyDao {
+        return db.currencyDao()
+    }
+
+    @Provides
+    fun provideAccountDao(db: AppDatabase): AccountDao {
+        return db.accountDao()
+    }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object RepositoryModule {
+
+    @Provides
+    @Singleton
+    fun provideHomeRepository(
+        transactionDao: TransactionDao
+    ): TransactionRepository {
+        return TransactionRepository(transactionDao)
+    }
 }
