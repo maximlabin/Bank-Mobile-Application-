@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.labin.piggybank.domain.TransactionType
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
 
 @Dao
 interface TransactionDao {
@@ -33,8 +34,11 @@ interface TransactionDao {
     @Query("DELETE FROM transactions WHERE id = :id")
     suspend fun deleteTransactionByID(id: Long) : Int
 
-    @Query("SELECT SUM(amount) from transactions")
-    fun getTotalBalance(): Flow<Double>
+    @Query("SELECT SUM(balance) FROM accounts")
+    fun getTotalBalance(): Flow<BigDecimal>
+
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getTransactionById(id: Long): TransactionEntity?
 
 }
 

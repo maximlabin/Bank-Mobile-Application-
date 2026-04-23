@@ -3,7 +3,6 @@ package com.labin.piggybank.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.labin.piggybank.data.AccountRepository
-import com.labin.piggybank.data.CategoryRepository
 import com.labin.piggybank.data.TransactionRepository
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData

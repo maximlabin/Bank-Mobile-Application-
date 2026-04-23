@@ -156,7 +156,7 @@ fun NewOperation(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { showAccountPicker = true } // Клик ловится здесь
+                    .clickable { showAccountPicker = true }
             ) {
                 OutlinedTextField(
                     value = selectedAccountName,
@@ -210,7 +210,6 @@ fun NewOperation(
             Button(
                 onClick = {
                     transactionViewModel.saveTransaction(
-                        userId = userId,
                         amount = amount,
                         category = selectedCategory,
                         accountId = selectedAccountId!!,
@@ -288,8 +287,6 @@ fun AccountPickerItem(account: Account, isSelected: Boolean, onSelect: () -> Uni
         }
     }
 }
-
-// ... Ваши CategoryItem и AddNewCategoryItem остаются без изменений ...
 
 @Composable
 fun CategoryItem(category: Category, isSelected: Boolean, onSelect: () -> Unit) {

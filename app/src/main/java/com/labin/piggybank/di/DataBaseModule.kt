@@ -52,16 +52,3 @@ object DatabaseModule {
         return db.accountDao()
     }
 }
-
-@Module
-@InstallIn(SingletonComponent::class)
-object RepositoryModule {
-
-    @Provides
-    @Singleton
-    fun provideHomeRepository(
-        transactionDao: TransactionDao
-    ): TransactionRepository {
-        return TransactionRepository(transactionDao)
-    }
-}

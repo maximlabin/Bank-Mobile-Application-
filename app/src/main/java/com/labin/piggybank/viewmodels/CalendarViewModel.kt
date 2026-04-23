@@ -58,6 +58,7 @@ class CalendarViewModel @Inject constructor() : ViewModel() {
     }
 
     fun confirmSelection() {
+
     }
 
     private fun buildResult(): CalendarSelectionResult {

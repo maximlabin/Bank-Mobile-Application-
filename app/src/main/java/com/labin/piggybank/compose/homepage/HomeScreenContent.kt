@@ -15,13 +15,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.mandatorySystemGesturesPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -49,7 +47,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -69,20 +66,19 @@ import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
 import com.labin.piggybank.ui.model.Transaction
 import com.labin.piggybank.domain.TransactionType
-import com.labin.piggybank.ui.theme.ThemeMode
-import com.labin.piggybank.utilities.toFormattedBalance
+import com.labin.piggybank.utilities.toDisplayString
+import java.math.BigDecimal
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-
 
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     HomeScreenContent(
         uiState = HomeUiState(
-            balance = 89567.0,
+            balance = BigDecimal.ZERO,
             cardNumber = 1234,
             lastTransactions = listOf()
         ),
@@ -121,6 +117,10 @@ fun HomeScreenContent(
 
         var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
 
+        val balanceText = remember(uiState.balance) {
+            uiState.balance.toDisplayString("RUB")
+        }
+
         Text(
             text = "Итого",
             style = MaterialTheme.typography.titleLarge,
@@ -128,9 +128,9 @@ fun HomeScreenContent(
         )
 
         Text(
-            text = uiState.balance.toFormattedBalance(),
+            text = balanceText,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Bold
         )
 
         SingleChoiceSegmentedButtonRow(
@@ -239,7 +239,7 @@ fun HomeScreenContent(
         ) {
             BankCardWithBalance(
                 cardNumber = uiState.cardNumber,
-                balance = uiState.balance
+                balanceText = balanceText
             )
 
             FloatingActionButton(
@@ -304,53 +304,36 @@ fun HomeScreenContent(
 @Composable
 fun BankCardWithBalance(
     cardNumber: Int,
-    balance: Double,
+    balanceText: String,
     modifier: Modifier = Modifier
 ) {
     var isShowingBalance by remember { mutableStateOf(false) }
 
     val containerColor by animateColorAsState(
-        targetValue = if (isShowingBalance) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.primary
-        },
+        targetValue = if (isShowingBalance) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.primary,
         animationSpec = tween(100)
     )
 
-    val contentColor by animateColorAsState (
-        targetValue = if (isShowingBalance) {
-            MaterialTheme.colorScheme.onPrimaryContainer
-        } else {
-            Color.White
-        },
+    val contentColor by animateColorAsState(
+        targetValue = if (isShowingBalance) MaterialTheme.colorScheme.onPrimaryContainer
+        else Color.White,
         animationSpec = tween(300)
     )
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top=10.dp)
-            .height(180.dp)
+        modifier = modifier.fillMaxWidth().padding(top = 10.dp).height(180.dp)
             .clickable { isShowingBalance = !isShowingBalance },
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        AnimatedContent(
-            targetState = isShowingBalance,
-            label = "card_content_switch"
-        ) { showingBalance ->
-            if (showingBalance) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Center
-                ) {
+        AnimatedContent(targetState = isShowingBalance, label = "card_content_switch") { showing ->
+            if (showing) {
+                Column(modifier = Modifier.fillMaxSize().padding(20.dp),
+                    horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.Center) {
                     Text(
-                        text = "$balance ₽",
+                        text = balanceText,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = contentColor
@@ -362,26 +345,14 @@ fun BankCardWithBalance(
                     )
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "BANK",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = contentColor,
-                        fontSize = 20.sp
-                    )
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp),
+                    horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.SpaceBetween) {
+                    Text(text = "BANK", style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold, color = contentColor, fontSize = 20.sp)
                     Text(
                         text = "•••• •••• •••• ${cardNumber.toString().padStart(4, '0')}",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Normal,
-                        color = contentColor,
-                        letterSpacing = 2.sp
+                        fontWeight = FontWeight.Normal, color = contentColor, letterSpacing = 2.sp
                     )
                 }
             }
