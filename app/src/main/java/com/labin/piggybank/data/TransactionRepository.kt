@@ -1,5 +1,6 @@
 package com.labin.piggybank.data
 
+import android.util.Log
 import androidx.room.Transaction
 import com.labin.piggybank.domain.TransactionType
 import com.labin.piggybank.domain.mapper.TransactionMapper
@@ -46,6 +47,10 @@ class TransactionRepository @Inject constructor(
             TransactionType.INCOME -> account.balance + amount
             TransactionType.EXPENSE -> account.balance - amount
             TransactionType.TRANSFER -> account.balance
+        }
+
+        if (!account.type.allowsNegativeBalance() && newBalance < BigDecimal.ZERO) {
+            throw IllegalArgumentException("Недостаточно средств на счёте ${account.name}")
         }
 
         accountDao.updateBalance(accountId, newBalance)

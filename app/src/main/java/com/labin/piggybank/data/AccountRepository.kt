@@ -1,6 +1,6 @@
 package com.labin.piggybank.data
 
-import com.labin.piggybank.utilities.AccountType
+import com.labin.piggybank.domain.AccountType
 import com.labin.piggybank.utilities.CurrencyIdResolver
 import kotlinx.coroutines.flow.Flow
 import java.math.BigDecimal

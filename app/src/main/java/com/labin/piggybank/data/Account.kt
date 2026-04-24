@@ -1,7 +1,7 @@
 package com.labin.piggybank.data
 
 import androidx.room.*
-import com.labin.piggybank.utilities.AccountType
+import com.labin.piggybank.domain.AccountType
 import java.math.BigDecimal
 import java.math.RoundingMode
 

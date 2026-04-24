@@ -3,7 +3,7 @@ package com.labin.piggybank.data
 import androidx.room.TypeConverter
 import com.labin.piggybank.domain.CategoryType
 import com.labin.piggybank.domain.TransactionType
-import com.labin.piggybank.utilities.AccountType
+import com.labin.piggybank.domain.AccountType
 import java.util.Date
 import java.math.BigDecimal
 
@@ -31,7 +31,8 @@ class Converters {
     fun fromBigDecimal(value: BigDecimal): String = value.toPlainString()
 
     @TypeConverter
-    fun toBigDecimal(value: String): BigDecimal = BigDecimal(value)
+    fun toBigDecimal(value: String?): BigDecimal? =
+        value?.toBigDecimalOrNull() ?: BigDecimal.ZERO
 
     @TypeConverter fun fromAccountType(type: AccountType): String = type.name
     @TypeConverter fun toAccountType(value: String): AccountType = AccountType.valueOf(value)
