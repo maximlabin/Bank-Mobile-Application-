@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 
 import com.labin.piggybank.data.Category
 import com.labin.piggybank.data.TransactionRepository
+import com.labin.piggybank.domain.TransactionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,9 +29,11 @@ class TransactionViewModel @Inject constructor(
         accountId: Long,
         currencyId: Long,
         merchantId: Long? = null,
-        goalId: Long? = null
+        goalId: Long? = null,
+        type: TransactionType,
+        destinationAccountId: Long? = null
     ) = viewModelScope.launch {
-        if (amount.isBlank() || category == null) {
+        if (amount.isBlank() || (category == null && type != TransactionType.TRANSFER)) {
             _saveResult.value = SaveResult.Error("Заполните сумму и категорию")
             return@launch
         }
@@ -39,6 +42,22 @@ class TransactionViewModel @Inject constructor(
         if (amountValue == null || amountValue <= BigDecimal.ZERO) {
             _saveResult.value = SaveResult.Error("Неверная сумма")
             return@launch
+        }
+
+        if (type != TransactionType.TRANSFER && category == null) {
+            _saveResult.value = SaveResult.Error("Выберите категорию")
+            return@launch
+        }
+
+        if (type == TransactionType.TRANSFER) {
+            if (destinationAccountId == null) {
+                _saveResult.value = SaveResult.Error("Выберите счёт зачисления")
+                return@launch
+            }
+            if (destinationAccountId == accountId) {
+                _saveResult.value = SaveResult.Error("Счета отправления и зачисления не могут совпадать")
+                return@launch
+            }
         }
 
         if (description.length > 50) {
@@ -56,7 +75,9 @@ class TransactionViewModel @Inject constructor(
                 accountId = accountId,
                 currencyId = currencyId,
                 merchantId = merchantId,
-                goalId = goalId
+                goalId = goalId,
+                type = type,
+                destinationAccountId = destinationAccountId
             )
             _saveResult.value = SaveResult.Success
         } catch (e: Exception) {

@@ -67,14 +67,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.data.Account
 import com.labin.piggybank.data.Category
-import com.labin.piggybank.domain.CategoryType
 import com.labin.piggybank.viewmodels.AccountViewModel
 import com.labin.piggybank.viewmodels.CategoryViewModel
 import com.labin.piggybank.viewmodels.SaveResult
 import com.labin.piggybank.viewmodels.TransactionViewModel
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.labin.piggybank.domain.TransactionType
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,14 +88,14 @@ fun NewOperation(
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf(TextFieldValue("")) }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
-
     var selectedAccountId by remember { mutableStateOf<Long?>(null) }
     var showAccountPicker by remember { mutableStateOf(false) }
+    var selectedDestinationAccountId by remember { mutableStateOf<Long?>(null) }
+    var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
+    val isTransfer = selectedType == TransactionType.TRANSFER
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val options = listOf(CategoryType.EXPENSE, CategoryType.INCOME)
     val saveResult by transactionViewModel.saveResult.collectAsState()
-    val state by categoryViewModel.uiState.collectAsStateWithLifecycle()
     val categories by categoryViewModel.categories.collectAsStateWithLifecycle()
     val accounts by accountViewModel.accounts.collectAsStateWithLifecycle()
 
@@ -111,6 +110,12 @@ fun NewOperation(
             }
         }
     }
+
+    LaunchedEffect(selectedType) {
+        selectedCategory = null
+        selectedDestinationAccountId = null
+    }
+
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -128,11 +133,27 @@ fun NewOperation(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                TransactionType.values().forEachIndexed { index, type ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3),
+                        onClick = { selectedType = type },
+                        selected = selectedType == type
+                    ) {
+                        Text(
+                            text = when(type) {
+                                TransactionType.EXPENSE -> "Расход"
+                                TransactionType.INCOME -> "Доход"
+                                TransactionType.TRANSFER -> "Перевод"
+                            }
+                        )
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
@@ -152,18 +173,18 @@ fun NewOperation(
                 singleLine = true
             )
 
-            val selectedAccountName = accounts.find { it.id == selectedAccountId }?.name ?: "Выберите счёт"
+            val sourceAccountName = accounts.find { it.id == selectedAccountId }?.name ?: "Выберите счёт"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showAccountPicker = true }
             ) {
                 OutlinedTextField(
-                    value = selectedAccountName,
+                    value = sourceAccountName,
                     onValueChange = {},
                     readOnly = true,
                     enabled = false,
-                    label = { Text("Счёт списания") },
+                    label = { Text(if (isTransfer) "Счёт отправления" else "Счёт списания") },
                     trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = selectedAccountId == null,
@@ -171,39 +192,85 @@ fun NewOperation(
                 )
             }
 
-            Text(
-                text = "Выберите категорию",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.align(Alignment.Start)
-            )
+            if (isTransfer) {
+                var showDestinationPicker by remember { mutableStateOf(false) }
+                val destinationAccountName = accounts.find { it.id == selectedDestinationAccountId }?.name ?: "Выберите счёт"
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                options.forEachIndexed { index, type ->
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                        onClick = { categoryViewModel.onTypeSelect(type) },
-                        selected = state.type == type
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDestinationPicker = true }
+                ) {
+                    OutlinedTextField(
+                        value = destinationAccountName,
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = false,
+                        label = { Text("Счёт зачисления") },
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = selectedDestinationAccountId == null || selectedDestinationAccountId == selectedAccountId,
+                        singleLine = true
+                    )
+                }
+
+                if (selectedAccountId != null && selectedDestinationAccountId == selectedAccountId) {
+                    Text(
+                        "Счета не могут совпадать",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                }
+                if (showDestinationPicker) {
+                    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    ModalBottomSheet(
+                        onDismissRequest = { showDestinationPicker = false },
+                        sheetState = sheetState
                     ) {
-                        Text(text = if (type == CategoryType.EXPENSE) "Расходы" else "Доходы")
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            Text("Выберите счёт", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(accounts.filter { it.id != selectedAccountId }, key = { it.id }) { account ->
+                                    AccountPickerItem(
+                                        account = account,
+                                        isSelected = account.id == selectedDestinationAccountId,
+                                        onSelect = {
+                                            selectedDestinationAccountId = account.id
+                                            showDestinationPicker = false
+                                        }
+                                    )
+                                }
+                                item { Spacer(Modifier.height(80.dp)) }
+                            }
+                        }
                     }
                 }
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryItem(
-                        category = category,
-                        isSelected = selectedCategory?.id == category.id,
-                        onSelect = { selectedCategory = category }
-                    )
-                }
-                item {
-                    AddNewCategoryItem(onClick = { navController.navigate("categoryEditor") })
+            if (!isTransfer) {
+                Text(
+                    text = "Выберите категорию",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(categories) { category ->
+                        CategoryItem(
+                            category = category,
+                            isSelected = selectedCategory?.id == category.id,
+                            onSelect = { selectedCategory = category }
+                        )
+                    }
+                    item {
+                        AddNewCategoryItem(onClick = { navController.navigate("categoryEditor") })
+                    }
                 }
             }
 
@@ -211,14 +278,22 @@ fun NewOperation(
                 onClick = {
                     transactionViewModel.saveTransaction(
                         amount = amount,
-                        category = selectedCategory,
+                        category = if (isTransfer) null else selectedCategory,
                         accountId = selectedAccountId!!,
                         currencyId = 1L,
-                        description = description.text
+                        description = description.text,
+                        destinationAccountId = if (isTransfer) selectedDestinationAccountId else null,
+                        type = selectedType
                     )
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                enabled = amount.isNotBlank() && selectedCategory != null && selectedAccountId != null
+                enabled = amount.isNotBlank() &&
+                        selectedAccountId != null &&
+                        if (isTransfer) {
+                            selectedDestinationAccountId != null && selectedDestinationAccountId != selectedAccountId
+                        } else {
+                            selectedCategory != null
+                        }
             ) {
                 Text("Добавить операцию")
             }
@@ -353,7 +428,7 @@ fun NewOperationScreenPreview() {
 fun NewOperationScreen(
     userId: Long,
     navController: NavController,
-    transactionViewModel:  TransactionViewModel = hiltViewModel(),
+    transactionViewModel: TransactionViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = hiltViewModel(),
     accountViewModel: AccountViewModel = hiltViewModel(),
 ) {

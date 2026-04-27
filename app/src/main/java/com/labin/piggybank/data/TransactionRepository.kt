@@ -31,39 +31,59 @@ class TransactionRepository @Inject constructor(
     suspend fun saveTransaction(
         amount: BigDecimal,
         description: String?,
-        category: Category,
+        category: Category?,
         accountId: Long,
         currencyId: Long,
         merchantId: Long?,
-        goalId: Long?
+        goalId: Long?,
+        type: TransactionType,
+        destinationAccountId: Long?
     ) {
         val finalCurrencyId = CurrencyIdResolver.resolve(currencyId, currencyDao)
+        val sourceAccount = accountDao.getAccountById(accountId)
+            ?: throw IllegalStateException("Счёт отправления не найден")
 
-        val account = accountDao.getAccountById(accountId)
-            ?: throw IllegalStateException("Счёт не найден")
+        when (type) {
+            TransactionType.TRANSFER -> {
+                val destId = destinationAccountId
+                    ?: throw IllegalArgumentException("Для перевода необходим счёт зачисления")
+                if (destId == accountId) throw IllegalArgumentException("Счета не могут совпадать")
 
-        val transactionType = category.type.asTransactionType
-        val newBalance = when (transactionType) {
-            TransactionType.INCOME -> account.balance + amount
-            TransactionType.EXPENSE -> account.balance - amount
-            TransactionType.TRANSFER -> account.balance
+                val destAccount = accountDao.getAccountById(destId)
+                    ?: throw IllegalStateException("Счёт зачисления не найден")
+
+                val newBalance = sourceAccount.balance - amount
+
+                if(!sourceAccount.type.allowsNegativeBalance() && newBalance < BigDecimal.ZERO) {
+                    throw IllegalArgumentException("Недостаточно средств на счёте ${sourceAccount.name}")
+                }
+
+                accountDao.updateBalance(accountId, sourceAccount.balance - amount)
+                accountDao.updateBalance(destId, destAccount.balance + amount)
+            }
+            TransactionType.EXPENSE -> {
+                if (category == null) throw IllegalArgumentException("Для расхода необходима категория")
+                val newBalance = sourceAccount.balance - amount
+                if (!sourceAccount.type.allowsNegativeBalance() && newBalance < BigDecimal.ZERO) {
+                    throw IllegalArgumentException("Недостаточно средств на счёте ${sourceAccount.name}")
+                }
+                accountDao.updateBalance(accountId, newBalance)
+            }
+            TransactionType.INCOME -> {
+                if (category == null) throw IllegalArgumentException("Для дохода необходима категория")
+                accountDao.updateBalance(accountId, sourceAccount.balance + amount)
+            }
         }
-
-        if (!account.type.allowsNegativeBalance() && newBalance < BigDecimal.ZERO) {
-            throw IllegalArgumentException("Недостаточно средств на счёте ${account.name}")
-        }
-
-        accountDao.updateBalance(accountId, newBalance)
 
         val transaction = TransactionEntity(
             id = 0,
             accountId = accountId,
-            categoryId = category.id,
+            categoryId = category?.id,
             merchantId = merchantId,
             currencyId = finalCurrencyId,
             goalId = goalId,
             amount = amount.setScale(2, RoundingMode.HALF_UP),
-            type = transactionType,
+            type = type,
             transactionDate = Date(),
             description = description
         )

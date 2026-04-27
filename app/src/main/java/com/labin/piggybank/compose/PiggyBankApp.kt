@@ -88,7 +88,9 @@ fun PiggyBankApp(
 
             composable("newOperation/{userId}") { backStackEntry ->
                 val userId = backStackEntry.arguments?.getLong("userId") ?: 0L
-                NewOperationScreen(userId = userId, navController = navController)
+                NewOperationScreen(userId = userId,
+                    navController = navController,
+                )
             }
             composable("profile/{userId}") { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""

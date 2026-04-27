@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.labin.piggybank.data.Account
 import com.labin.piggybank.data.AccountRepository
 import com.labin.piggybank.domain.AccountType
+import com.labin.piggybank.ui.model.AccountUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,22 +21,8 @@ import javax.inject.Inject
 class AccountViewModel @Inject constructor(
     private val repository: AccountRepository
 ) : ViewModel() {
-
-    data class UiState(
-        val name: String = "",
-        val balance: String = "0",
-        val type: AccountType = AccountType.CASH,
-        val currencyId: Long = 1,
-        val note: String = "",
-        val bankName: String = "",
-        val cardColor: String = "#4CAF50",
-        val isLoading: Boolean = false,
-        val error: String? = null,
-        val isSuccess: Boolean = false
-    )
-
-    private val _state = MutableStateFlow(UiState())
-    val state: StateFlow<UiState> = _state
+    private val _state = MutableStateFlow(AccountUIState())
+    val state: StateFlow<AccountUIState> = _state
 
     val accounts: StateFlow<List<Account>> = repository.getAllAccounts()
         .catch { e ->

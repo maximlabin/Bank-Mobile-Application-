@@ -20,18 +20,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -47,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -62,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.labin.piggybank.data.Account
 import com.labin.piggybank.ui.model.HomeUiState
 import com.labin.piggybank.ui.model.PieChartData
 import com.labin.piggybank.ui.model.Transaction
@@ -105,7 +110,7 @@ fun HomeScreenContent(
             .verticalScroll(rememberScrollState())
             .padding(
                 start = 16.dp,
-                top = 32.dp,
+                top = 16.dp,
                 end = 16.dp,
                 bottom = 0.dp
             ),
@@ -164,7 +169,7 @@ fun HomeScreenContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 FloatingActionButton(
-                    onClick = { navController.navigate("profile/123") },
+                    onClick = { navController.navigate("profile/1") },
                     modifier = Modifier.size(64.dp),
                     containerColor = Color(0xFF6200EE)
                 ) {
@@ -177,13 +182,13 @@ fun HomeScreenContent(
                 }
 
                 FloatingActionButton(
-                    onClick = { },
+                    onClick = { navController.navigate("currency")},
                     modifier = Modifier.size(64.dp),
                     containerColor = Color(0xFF6200EE)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = "Выбрать дату",
+                        imageVector = Icons.Default.CurrencyExchange,
+                        contentDescription = "Выбрать валюту",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
@@ -203,7 +208,7 @@ fun HomeScreenContent(
             }
 
             FloatingActionButton(
-                onClick = { navController.navigate("newOperation/123") },
+                onClick = { navController.navigate("newOperation/1") },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .size(64.dp),
@@ -402,23 +407,23 @@ fun DraggableTransactionItem(
             state = dismissState,
             enableDismissFromEndToStart = false,
             backgroundContent = {
-                val color = when (dismissState.dismissDirection) {
-                    SwipeToDismissBoxValue.StartToEnd -> Color.Red.copy(alpha = 0.8f)
-                    else -> Color.Transparent
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color, shape = RoundedCornerShape(12.dp))
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Удалить",
-                        tint = Color.White
-                    )
-                }
+//                val color = when (dismissState.dismissDirection) {
+//                    SwipeToDismissBoxValue.StartToEnd -> Color.Red.copy(alpha = 0.8f)
+//                    else -> Color.Transparent
+//                }
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .background(color, shape = RoundedCornerShape(12.dp))
+//                        .padding(horizontal = 20.dp),
+//                    contentAlignment = Alignment.CenterStart
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Delete,
+//                        contentDescription = "Удалить",
+//                        tint = Color.White
+//                    )
+//                }
             }
         ) {
             TransactionItem(transaction = transaction)

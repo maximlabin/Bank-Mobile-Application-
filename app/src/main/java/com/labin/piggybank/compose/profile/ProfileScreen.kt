@@ -42,14 +42,13 @@ fun ProfileScreen(
     navController: NavController,
     viewModel: ThemeViewModel = hiltViewModel()
 ) {
-    // Подписываемся на состояние темы из ViewModel
     val themeMode by viewModel.themeModeFlow.collectAsStateWithLifecycle()
 
     ProfileScreenContent(
         userId = userId,
         navController = navController,
-        currentThemeMode = themeMode, // Передаем состояние
-        onThemeChanged = { newMode -> viewModel.setTheme(newMode) } // Передаем действие
+        currentThemeMode = themeMode,
+        onThemeChanged = { newMode -> viewModel.setTheme(newMode) }
     )
 }
 
@@ -68,14 +67,7 @@ fun ProfileScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Профиль пользователя: $userId",
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Выберите тему:",
+            text = "Выберите тему оформления:",
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -115,7 +107,7 @@ fun ProfileScreenContent(
 @Composable
 fun ProfileScreenPreview() {
     ProfileScreenContent(
-        userId = "3",
+        userId = "1",
         navController = rememberNavController(),
         currentThemeMode = ThemeMode.SYSTEM,
         onThemeChanged = {}

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -36,12 +37,12 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = combine(
         transactionRepository.getBalanceFlow(),
         transactionRepository.getLastTransactions(),
-        pieDataFlow
+        pieDataFlow,
     ) { balance, transactions, categories ->
         HomeUiState(
             balance = balance,
             lastTransactions = transactions,
-            categories = categories
+            categories = categories,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 

@@ -63,7 +63,7 @@ data class TransactionEntity(
     val accountId: Long,
 
     @ColumnInfo(name = "category_id")
-    val categoryId: Long,
+    val categoryId: Long? = null,
 
     @ColumnInfo(name = "merchant_id")
     val merchantId: Long? = null,
