@@ -19,6 +19,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.R
 import com.labin.piggybank.compose.account.AccountScreen
+import com.labin.piggybank.compose.analytics.AnalyticsScreen
+import com.labin.piggybank.compose.analytics.CreateGoalScreen
 import com.labin.piggybank.compose.calendar.CalendarScreen
 import com.labin.piggybank.compose.homepage.HomeScreen
 import com.labin.piggybank.compose.profile.ProfileScreen
@@ -93,6 +95,20 @@ fun PiggyBankApp(
                 val userId = backStackEntry.arguments?.getLong("userId") ?: 0L
                 NewOperationScreen(userId = userId,
                     navController = navController,
+                )
+            }
+
+            composable("statistics") {
+                AnalyticsScreen(
+                    onCreateGoalClick = {
+                        navController.navigate("create_goal")
+                    }
+                )
+            }
+
+            composable("create_goal") {
+                CreateGoalScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

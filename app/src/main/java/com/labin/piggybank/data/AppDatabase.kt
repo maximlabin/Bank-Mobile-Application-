@@ -27,7 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun categoryDao(): CategoryDao
 //    abstract fun budgetDao(): BudgetDao
-//    abstract fun goalDao(): FinancialGoalDao
+    abstract fun goalDao(): FinancialGoalDao
 //    abstract fun merchantDao(): MerchantDao
     abstract fun currencyDao(): CurrencyDao
 

@@ -6,6 +6,7 @@ import com.labin.piggybank.data.AccountDao
 import com.labin.piggybank.data.AppDatabase
 import com.labin.piggybank.data.CategoryDao
 import com.labin.piggybank.data.CurrencyDao
+import com.labin.piggybank.data.FinancialGoalDao
 import com.labin.piggybank.data.TransactionDao
 import com.labin.piggybank.data.TransactionRepository
 import com.labin.piggybank.utilities.DATABASE_NAME
@@ -50,5 +51,10 @@ object DatabaseModule {
     @Provides
     fun provideAccountDao(db: AppDatabase): AccountDao {
         return db.accountDao()
+    }
+
+    @Provides
+    fun provideFinancialGoalDao(db: AppDatabase): FinancialGoalDao {
+        return db.goalDao()
     }
 }

@@ -25,7 +25,7 @@ data class FinancialGoal(
     val targetAccountId: Long? = null,
     val name: String,
     val targetAmount: BigDecimal,
-    val currentAmount: BigDecimal = BigDecimal.ZERO, // Кэшируемое значение
+    val currentAmount: BigDecimal = BigDecimal.ZERO,
     val deadline: Date? = null,
     val icon: String? = null
 )
