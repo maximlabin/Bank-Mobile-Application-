@@ -8,8 +8,6 @@ import java.math.BigDecimal
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.labin.piggybank.utilities.getCurrencyName
-import kotlin.let
-
 
 @Singleton
 class RetrofitProvider @Inject constructor() {

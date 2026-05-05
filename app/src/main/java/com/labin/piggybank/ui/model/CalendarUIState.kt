@@ -11,6 +11,13 @@ sealed class CalendarSelectionMode {
     object Year : CalendarSelectionMode()
 }
 
+sealed class CalendarSelectionResult {
+    data class SingleDate(val date: LocalDate) : CalendarSelectionResult()
+    data class DateRange(val start: LocalDate, val end: LocalDate) : CalendarSelectionResult()
+    data class DayOfWeek(val day: java.time.DayOfWeek) : CalendarSelectionResult()
+    data class Year(val year: java.time.Year) : CalendarSelectionResult()
+}
+
 data class CalendarUiState(
     val mode: CalendarSelectionMode = CalendarSelectionMode.SingleDate,
     val selectedDate: LocalDate? = null,

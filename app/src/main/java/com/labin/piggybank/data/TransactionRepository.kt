@@ -1,14 +1,10 @@
 package com.labin.piggybank.data
 
-import android.util.Log
 import androidx.room.Transaction
 import com.labin.piggybank.domain.TransactionType
 import com.labin.piggybank.domain.mapper.TransactionMapper
 import com.labin.piggybank.utilities.CurrencyIdResolver
-import com.labin.piggybank.utilities.asTransactionType
-import com.labin.piggybank.ui.model.Transaction as UiTransaction
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Date
@@ -19,12 +15,18 @@ class TransactionRepository @Inject constructor(
     private val accountDao: AccountDao,
     private val currencyDao: CurrencyDao
 ) {
-    fun getLastTransactions(): Flow<List<UiTransaction>> =
-        transactionDao.getLastTransactions()
-            .map { TransactionMapper.toUiList(it) }
+    fun getLastTransactions(
+        type: TransactionType,
+        start: Long,
+        end: Long,
+        limit: Int
+    ): Flow<List<TransactionEntity>> {
+        return transactionDao.getLastTransactions(type, start, end, limit)
 
-    fun getCategoryStats(type: TransactionType): Flow<List<CategorySummary>> {
-        return transactionDao.getAggregatedStats(type)
+    }
+
+    fun getCategoryStats(type: TransactionType, start: Long, end: Long): Flow<List<CategorySummary>> {
+        return transactionDao.getAggregatedStats(type, start, end)
     }
 
     @Transaction
@@ -91,8 +93,9 @@ class TransactionRepository @Inject constructor(
         transactionDao.insert(transaction)
     }
 
-    fun getBalanceFlow(): Flow<BigDecimal>
-        = transactionDao.getTotalBalance()
+    fun getBalanceFlow(start: Long, end: Long): Flow<BigDecimal> {
+        return transactionDao.getBalanceForPeriod(start, end)
+    }
 
     @Transaction
     suspend fun deleteTransactionById(id: Long) {

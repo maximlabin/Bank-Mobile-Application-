@@ -73,6 +73,7 @@ import com.labin.piggybank.viewmodels.SaveResult
 import com.labin.piggybank.viewmodels.TransactionViewModel
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.lazy.items
+import com.labin.piggybank.domain.CategoryType
 import com.labin.piggybank.domain.TransactionType
 
 
@@ -140,7 +141,14 @@ fun NewOperation(
                 TransactionType.values().forEachIndexed { index, type ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = 3),
-                        onClick = { selectedType = type },
+                        onClick = {
+                            selectedType = type
+                            when (type) {
+                                TransactionType.EXPENSE -> categoryViewModel.onTypeSelect(CategoryType.EXPENSE)
+                                TransactionType.INCOME -> categoryViewModel.onTypeSelect(CategoryType.INCOME)
+                                TransactionType.TRANSFER -> {}
+                            }
+                        },
                         selected = selectedType == type
                     ) {
                         Text(
@@ -222,6 +230,7 @@ fun NewOperation(
                         modifier = Modifier.align(Alignment.Start)
                     )
                 }
+
                 if (showDestinationPicker) {
                     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                     ModalBottomSheet(

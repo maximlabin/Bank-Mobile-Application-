@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.R
@@ -24,6 +25,8 @@ import com.labin.piggybank.compose.profile.ProfileScreen
 import com.labin.piggybank.compose.operation.NewOperationScreen
 import com.labin.piggybank.compose.category.CategoryEditorScreen
 import com.labin.piggybank.compose.currency.CurrencyScreen
+import com.labin.piggybank.compose.operation.TransactionListScreen
+import com.labin.piggybank.viewmodels.CalendarViewModel
 
 sealed class MainScreen(
     val route: String,
@@ -62,7 +65,7 @@ fun PiggyBankApp(
                                 val targetRoute = when (screen) {
                                     MainScreen.Home -> "home"
                                     MainScreen.Statistics -> "statistics"
-                                    MainScreen.NewOperation -> "newOperation/$currentUserId"
+                                    MainScreen.NewOperation -> "operations"
                                     MainScreen.Profile -> "profile/$currentUserId"
                                 }
                                 navController.navigate(targetRoute) {
@@ -92,6 +95,10 @@ fun PiggyBankApp(
                     navController = navController,
                 )
             }
+
+            composable("operations") {
+                TransactionListScreen(navController = navController)
+            }
             composable("profile/{userId}") { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
                 ProfileScreen(userId = userId, navController = navController)
@@ -100,7 +107,10 @@ fun PiggyBankApp(
                 CurrencyScreen()
             }
             composable("calendar") {
-                CalendarScreen(navController= navController)
+                val calendarVM: CalendarViewModel = hiltViewModel()
+                CalendarScreen(
+                    navController = navController,
+                )
             }
             composable("account") {
                 AccountScreen(navController= navController)

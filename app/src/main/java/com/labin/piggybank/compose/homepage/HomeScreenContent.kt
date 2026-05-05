@@ -64,6 +64,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.data.Account
@@ -72,6 +74,7 @@ import com.labin.piggybank.ui.model.PieChartData
 import com.labin.piggybank.ui.model.Transaction
 import com.labin.piggybank.domain.TransactionType
 import com.labin.piggybank.utilities.toDisplayString
+import com.labin.piggybank.viewmodels.AccountViewModel
 import java.math.BigDecimal
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -88,11 +91,8 @@ fun HomeScreenPreview() {
             lastTransactions = listOf()
         ),
         navController = rememberNavController(),
-        onDeleteTransaction = {
-            println("Preview: Delete transaction ${it.id}")
-        },
-        onTypeSelected = {}
-
+        onTypeSelected = {},
+        accountViewModel = hiltViewModel(),
     )
 }
 
@@ -100,17 +100,18 @@ fun HomeScreenPreview() {
 fun HomeScreenContent(
     uiState: HomeUiState,
     navController: NavController,
-    onDeleteTransaction: (Transaction) -> Unit,
     onTypeSelected: (TransactionType) -> Unit,
-    modifier: Modifier = Modifier,
+    accountViewModel: AccountViewModel
 ) {
+    val accounts by accountViewModel.accounts.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(
                 start = 16.dp,
-                top = 16.dp,
+                top = 32.dp,
                 end = 16.dp,
                 bottom = 0.dp
             ),
@@ -242,7 +243,7 @@ fun HomeScreenContent(
             verticalArrangement = Arrangement.spacedBy(
                 16.dp)
         ) {
-            BankCardWithBalance(
+            CardWithBalance(
                 cardNumber = uiState.cardNumber,
                 balanceText = balanceText
             )
@@ -261,53 +262,12 @@ fun HomeScreenContent(
                     modifier = Modifier.size(24.dp)
                 )
             }
-
-            Text(
-                text = "Последние операции",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-
-            Row( horizontalArrangement = Arrangement.SpaceBetween,
-                 modifier = Modifier.fillMaxSize()
-                ) {
-                Text(
-                    text = "Описание",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Normal,
-                )
-
-                Text(
-                    text = "Сумма",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Normal,
-                )
-            }
-
-            LazyColumn(
-                modifier = Modifier.height(200.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.lastTransactions,
-                    key = {transaction -> transaction.id} ) { transaction ->
-                    DraggableTransactionItem(
-                        modifier = Modifier.animateItem(
-                            fadeInSpec = null,
-                            fadeOutSpec = tween(300)
-                        ),
-                        transaction = transaction,
-                        onDelete = {
-                            onDeleteTransaction(transaction)
-                        })
-                    }
-                }
-            }
-
         }
+    }
 }
 
 @Composable
-fun BankCardWithBalance(
+fun CardWithBalance(
     cardNumber: Int,
     balanceText: String,
     modifier: Modifier = Modifier
@@ -361,72 +321,6 @@ fun BankCardWithBalance(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun TransactionItem(transaction: Transaction) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(transaction.description ?: "Без описания")
-        Text(
-            text = (if (transaction.type == TransactionType.INCOME) "+" else "-") +
-                    " ${transaction.amount.toPlainString()} ₽",
-            color = if (transaction.type == TransactionType.INCOME)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.error
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DraggableTransactionItem(
-    transaction: Transaction,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
-
-) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.StartToEnd) {
-                onDelete()
-                println("delete")
-                true
-            } else {
-                false
-            }
-        }
-    )
-    Box(modifier = modifier) {
-        SwipeToDismissBox(
-            state = dismissState,
-            enableDismissFromEndToStart = false,
-            backgroundContent = {
-//                val color = when (dismissState.dismissDirection) {
-//                    SwipeToDismissBoxValue.StartToEnd -> Color.Red.copy(alpha = 0.8f)
-//                    else -> Color.Transparent
-//                }
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .background(color, shape = RoundedCornerShape(12.dp))
-//                        .padding(horizontal = 20.dp),
-//                    contentAlignment = Alignment.CenterStart
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Delete,
-//                        contentDescription = "Удалить",
-//                        tint = Color.White
-//                    )
-//                }
-            }
-        ) {
-            TransactionItem(transaction = transaction)
         }
     }
 }

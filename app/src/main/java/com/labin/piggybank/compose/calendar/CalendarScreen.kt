@@ -25,10 +25,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavController
+import com.labin.piggybank.di.DateFilterManager
 import com.labin.piggybank.ui.model.CalendarSelectionMode
 import com.labin.piggybank.ui.model.CalendarUiState
-import com.labin.piggybank.viewmodels.CalendarSelectionResult
 import com.labin.piggybank.viewmodels.CalendarViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -40,10 +41,10 @@ import java.util.*
 @Composable
 fun CalendarScreen(
     navController: NavController,
-    viewModel: CalendarViewModel = hiltViewModel(),
-    onResult: (CalendarSelectionResult) -> Unit = {}
+    viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     val modes = listOf(
         CalendarSelectionMode.SingleDate to "Дата",
         CalendarSelectionMode.DateRange to "Период",
@@ -66,7 +67,6 @@ fun CalendarScreen(
             Button(
                 onClick = {
                     viewModel.confirmSelection()
-                    onResult(CalendarSelectionResult.SingleDate(state.selectedDate ?: LocalDate.now()))
                     navController.popBackStack()
                 },
                 modifier = Modifier

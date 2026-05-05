@@ -9,23 +9,23 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.labin.piggybank.viewmodels.AccountViewModel
 import com.labin.piggybank.viewmodels.DashboardViewModel
 
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(),
+    accountViewModel: AccountViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         uiState = uiState,
         navController = navController,
-        onDeleteTransaction = { transaction ->
-            viewModel.deleteTransaction(transaction.id)
-        },
         onTypeSelected = { type ->
             viewModel.setFilterType(type)
         },
+        accountViewModel = accountViewModel,
     )
 }
