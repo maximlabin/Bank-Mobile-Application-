@@ -1,17 +1,20 @@
 package com.labin.piggybank.compose.operation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -73,8 +76,13 @@ import com.labin.piggybank.viewmodels.SaveResult
 import com.labin.piggybank.viewmodels.TransactionViewModel
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import com.labin.piggybank.domain.CategoryType
 import com.labin.piggybank.domain.TransactionType
+import java.util.Date
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,6 +107,9 @@ fun NewOperation(
     val saveResult by transactionViewModel.saveResult.collectAsState()
     val categories by categoryViewModel.categories.collectAsStateWithLifecycle()
     val accounts by accountViewModel.accounts.collectAsStateWithLifecycle()
+    var selectedDateMillis by remember { mutableStateOf<Long?>(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
 
     LaunchedEffect(saveResult) {
         saveResult?.let { result ->
@@ -117,26 +128,50 @@ fun NewOperation(
         selectedDestinationAccountId = null
     }
 
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Новая операция") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                }
-            )
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedDateMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                    showDatePicker = false
+                }) { Text("Выбрать") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Отмена") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
-    ) { padding ->
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 15.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top=5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Назад",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Новая операция",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 TransactionType.values().forEachIndexed { index, type ->
                     SegmentedButton(
@@ -171,6 +206,25 @@ fun NewOperation(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = selectedDateMillis?.let { transactionViewModel.formatDate(it) } ?: "Выберите дату",
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text("Дата операции") },
+                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = { showDatePicker = true }) {
+                    Text("Выбрать")
+                }
+            }
 
             OutlinedTextField(
                 value = description,
@@ -266,9 +320,12 @@ fun NewOperation(
 
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+
                 ) {
                     items(categories) { category ->
                         CategoryItem(
@@ -292,7 +349,8 @@ fun NewOperation(
                         currencyId = 1L,
                         description = description.text,
                         destinationAccountId = if (isTransfer) selectedDestinationAccountId else null,
-                        type = selectedType
+                        type = selectedType,
+                        date = Date(selectedDateMillis ?: System.currentTimeMillis())
                     )
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -307,13 +365,16 @@ fun NewOperation(
                 Text("Добавить операцию")
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 
     if (showAccountPicker) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(onDismissRequest = {
-            showAccountPicker = false
-                                            }, sheetState = sheetState) {
+        ModalBottomSheet(onDismissRequest = { showAccountPicker = false }, sheetState = sheetState) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Text("Выберите счёт", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
 

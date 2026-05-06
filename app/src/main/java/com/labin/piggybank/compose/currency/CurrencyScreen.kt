@@ -12,16 +12,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,77 +39,96 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.labin.piggybank.data.Currency
 import com.labin.piggybank.ui.model.CurrencyUiState
 import com.labin.piggybank.viewmodels.CurrencyViewModel
 import java.text.DecimalFormat
 
 @Composable
-fun CurrencyScreen(viewModel: CurrencyViewModel = hiltViewModel()) {
+@OptIn(ExperimentalMaterial3Api::class)
+fun CurrencyScreen(
+    navController: NavController,
+    viewModel: CurrencyViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentState = state
     val selectedBase by viewModel.selectedBase.collectAsStateWithLifecycle()
     val availableCurrencies = listOf("RUB", "USD", "EUR", "CNY", "KZT")
     var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = selectedBase,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Базовая валюта") },
-                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Курсы валют") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Default.ArrowBack, "Назад")
+                    }
+                }
             )
+        }
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedBase,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Базовая валюта") },
+                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                availableCurrencies.forEach { currency ->
-                    DropdownMenuItem(
-                        text = { Text(currency) },
-                        onClick = {
-                            viewModel.selectBaseCurrency(currency)
-                            expanded = false
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    availableCurrencies.forEach { currency ->
+                        DropdownMenuItem(
+                            text = { Text(currency) },
+                            onClick = {
+                                viewModel.selectBaseCurrency(currency)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { expanded = true },
+                    contentAlignment = Alignment.CenterEnd
+                ) {}
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Text(text = "Курсы валют", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+
+            when (currentState) {
+                is CurrencyUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+                is CurrencyUiState.Success -> {
+                    LazyColumn {
+                        items(currentState.rates, key = { it.id }) { currency ->
+                            CurrencyRow(currency = currency)
                         }
+                    }
+                }
+                is CurrencyUiState.Error -> {
+                    Text(
+                        text = (state as CurrencyUiState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
             }
-
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable { expanded = true },
-                contentAlignment = Alignment.CenterEnd
-            ) {}
-        }
-
-        Spacer(Modifier.height(16.dp))
-        Text(text = "Курсы валют", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(16.dp))
-
-        when (currentState) {
-            is CurrencyUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            }
-            is CurrencyUiState.Success -> {
-                LazyColumn {
-                    items(currentState.rates, key = { it.id }) { currency ->
-                        CurrencyRow(currency = currency)
-                    }
-                }
-            }
-            is CurrencyUiState.Error -> {
-                Text(
-                    text = (state as CurrencyUiState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
         }
     }
+
 }
 
 @Composable

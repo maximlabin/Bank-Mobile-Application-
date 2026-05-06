@@ -9,8 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.Month
 import java.time.Year
 import javax.inject.Inject
 
@@ -48,8 +48,8 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-    fun selectDayOfWeek(day: DayOfWeek) {
-        _uiState.update { it.copy(selectedDay = day) }
+    fun selectMonth(month: Month) {
+        _uiState.update { it.copy(selectedMonth = month) }
     }
 
     fun selectYear(year: Year) {
@@ -65,8 +65,8 @@ class CalendarViewModel @Inject constructor(
                 CalendarSelectionResult.SingleDate(state.selectedDate!!)
             CalendarSelectionMode.DateRange ->
                 CalendarSelectionResult.DateRange(state.startDate!!, state.endDate!!)
-            CalendarSelectionMode.DayOfWeek ->
-                CalendarSelectionResult.DayOfWeek(state.selectedDay!!)
+            CalendarSelectionMode.Month ->
+                CalendarSelectionResult.Month(state.selectedMonth!!)
             CalendarSelectionMode.Year ->
                 CalendarSelectionResult.Year(state.selectedYear!!)
         }
@@ -78,7 +78,7 @@ class CalendarViewModel @Inject constructor(
         return when (state.mode) {
             is CalendarSelectionMode.SingleDate -> CalendarSelectionResult.SingleDate(state.selectedDate!!)
             is CalendarSelectionMode.DateRange -> CalendarSelectionResult.DateRange(state.startDate!!, state.endDate!!)
-            is CalendarSelectionMode.DayOfWeek -> CalendarSelectionResult.DayOfWeek(state.selectedDay as DayOfWeek)
+            is CalendarSelectionMode.Month -> CalendarSelectionResult.Month(state.selectedMonth!!)
             is CalendarSelectionMode.Year -> CalendarSelectionResult.Year(state.selectedYear!!)
         }
     }

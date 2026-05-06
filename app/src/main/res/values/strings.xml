@@ -2,6 +2,6 @@
     <string name="app_name">PiggyBank</string>
     <string name="nav_home">Главная</string>
     <string name="nav_new_op">Операции</string>
-    <string name="nav_stats">Статистика</string>
-    <string name="nav_profile">Профиль</string>
+    <string name="nav_stats">Аналитика</string>
+    <string name="nav_profile">Настройки</string>
 </resources>

@@ -255,11 +255,10 @@ fun HomeScreenContent(
                     .height(50.dp),
                 containerColor = Color(0xFF6200EE)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Добавить новый счет",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = "Добавить новый счет",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Normal
                 )
             }
         }

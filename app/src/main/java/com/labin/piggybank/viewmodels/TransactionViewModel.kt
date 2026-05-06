@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,7 +32,8 @@ class TransactionViewModel @Inject constructor(
         merchantId: Long? = null,
         goalId: Long? = null,
         type: TransactionType,
-        destinationAccountId: Long? = null
+        destinationAccountId: Long? = null,
+        date: Date
     ) = viewModelScope.launch {
         if (amount.isBlank() || (category == null && type != TransactionType.TRANSFER)) {
             _saveResult.value = SaveResult.Error("Заполните сумму и категорию")
@@ -41,6 +43,12 @@ class TransactionViewModel @Inject constructor(
         val amountValue = amount.replace(',', '.').trim().toBigDecimalOrNull()
         if (amountValue == null || amountValue <= BigDecimal.ZERO) {
             _saveResult.value = SaveResult.Error("Неверная сумма")
+            return@launch
+        }
+
+        val maxAllowedDate = Date(System.currentTimeMillis() + 86_400_000L) // +24 часа
+        if (date.after(maxAllowedDate)) {
+            _saveResult.value = SaveResult.Error("Дата операции не может быть в будущем")
             return@launch
         }
 
@@ -77,7 +85,8 @@ class TransactionViewModel @Inject constructor(
                 merchantId = merchantId,
                 goalId = goalId,
                 type = type,
-                destinationAccountId = destinationAccountId
+                destinationAccountId = destinationAccountId,
+                transactionDate = date,
             )
             _saveResult.value = SaveResult.Success
         } catch (e: Exception) {
@@ -87,6 +96,11 @@ class TransactionViewModel @Inject constructor(
 
     fun resetSaveResult() {
         _saveResult.value = null
+    }
+
+    fun formatDate(timestamp: Long): String {
+        return java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
+            .format(java.util.Date(timestamp))
     }
 }
 

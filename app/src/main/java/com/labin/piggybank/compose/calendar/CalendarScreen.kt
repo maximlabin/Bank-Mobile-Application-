@@ -1,16 +1,13 @@
 package com.labin.piggybank.compose.calendar
 
 import androidx.compose.runtime.Composable
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -25,14 +22,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavController
-import com.labin.piggybank.di.DateFilterManager
+import com.labin.piggybank.utilities.getMonthNameNominative
 import com.labin.piggybank.ui.model.CalendarSelectionMode
 import com.labin.piggybank.ui.model.CalendarUiState
 import com.labin.piggybank.viewmodels.CalendarViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.Month
 import java.time.Year
 import java.time.format.TextStyle
 import java.util.*
@@ -48,7 +45,7 @@ fun CalendarScreen(
     val modes = listOf(
         CalendarSelectionMode.SingleDate to "Дата",
         CalendarSelectionMode.DateRange to "Период",
-        CalendarSelectionMode.DayOfWeek to "День недели",
+        CalendarSelectionMode.Month to "Месяц",
         CalendarSelectionMode.Year to "Год"
     )
 
@@ -121,10 +118,10 @@ fun CalendarScreen(
                         onDateSelected = viewModel::selectDate
                     )
                 }
-                is CalendarSelectionMode.DayOfWeek -> {
-                    DayOfWeekSelector(
-                        selectedDay = state.selectedDay,
-                        onDaySelected = viewModel::selectDayOfWeek
+                is CalendarSelectionMode.Month -> {
+                    MonthSelector(
+                        selectedMonth = state.selectedMonth,
+                        onMonthSelected = viewModel::selectMonth
                     )
                 }
                 is CalendarSelectionMode.Year -> {
@@ -240,21 +237,21 @@ fun DateRangePicker(
 }
 
 @Composable
-fun DayOfWeekSelector(
-    selectedDay: DayOfWeek?,
-    onDaySelected: (DayOfWeek) -> Unit
+fun MonthSelector(
+    selectedMonth: Month?,
+    onMonthSelected: (Month) -> Unit
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(3),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(DayOfWeek.values().toList()) { day ->
-            val isSelected = selectedDay == day
+        items(Month.entries.toList()) { month ->
+            val isSelected = selectedMonth == month
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onDaySelected(day) },
+                    .clickable { onMonthSelected(month) },
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected)
                         MaterialTheme.colorScheme.primaryContainer
@@ -266,24 +263,12 @@ fun DayOfWeekSelector(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = day.getDisplayName(TextStyle.FULL, Locale("ru")),
+                        text = getMonthNameNominative(month),
                         style = MaterialTheme.typography.titleMedium,
                         color = if (isSelected)
                             MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = when (day) {
-                            DayOfWeek.MONDAY -> "Пн"
-                            DayOfWeek.TUESDAY -> "Вт"
-                            DayOfWeek.WEDNESDAY -> "Ср"
-                            DayOfWeek.THURSDAY -> "Чт"
-                            DayOfWeek.FRIDAY -> "Пт"
-                            DayOfWeek.SATURDAY -> "Сб"
-                            DayOfWeek.SUNDAY -> "Вс"
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -291,7 +276,6 @@ fun DayOfWeekSelector(
     }
 }
 
-// Year Selector
 @Composable
 fun YearSelector(
     selectedYear: Year?,
@@ -351,8 +335,8 @@ fun SelectionSummary(state: CalendarUiState) {
                         state.selectedDate?.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")) ?: "—"
                     is CalendarSelectionMode.DateRange ->
                         "${state.startDate?.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM")) ?: "—"} — ${state.endDate?.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")) ?: "—"}"
-                    is CalendarSelectionMode.DayOfWeek ->
-                        state.selectedDay?.getDisplayName(TextStyle.FULL, Locale("ru")) ?: "—"
+                    is CalendarSelectionMode.Month ->
+                        state.selectedMonth?.getDisplayName(TextStyle.FULL, Locale("ru")) ?: "—"
                     is CalendarSelectionMode.Year ->
                         state.selectedYear?.value?.toString() ?: "—"
                 },

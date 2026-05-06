@@ -39,7 +39,8 @@ class TransactionRepository @Inject constructor(
         merchantId: Long?,
         goalId: Long?,
         type: TransactionType,
-        destinationAccountId: Long?
+        destinationAccountId: Long?,
+        transactionDate: Date,
     ) {
         val finalCurrencyId = CurrencyIdResolver.resolve(currencyId, currencyDao)
         val sourceAccount = accountDao.getAccountById(accountId)
@@ -86,8 +87,8 @@ class TransactionRepository @Inject constructor(
             goalId = goalId,
             amount = amount.setScale(2, RoundingMode.HALF_UP),
             type = type,
-            transactionDate = Date(),
-            description = description
+            description = description,
+            transactionDate = transactionDate,
         )
 
         transactionDao.insert(transaction)
