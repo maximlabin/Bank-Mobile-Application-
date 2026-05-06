@@ -1,24 +1,13 @@
 package com.labin.piggybank.compose.operation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -27,33 +16,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.QuestionMark
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,12 +34,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.labin.piggybank.data.Account
 import com.labin.piggybank.data.Category
+import com.labin.piggybank.data.FinancialGoal
 import com.labin.piggybank.viewmodels.AccountViewModel
 import com.labin.piggybank.viewmodels.CategoryViewModel
+import com.labin.piggybank.viewmodels.GoalViewModel
 import com.labin.piggybank.viewmodels.SaveResult
 import com.labin.piggybank.viewmodels.TransactionViewModel
 import android.graphics.Color as AndroidColor
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.TextButton
@@ -84,7 +49,6 @@ import com.labin.piggybank.domain.CategoryType
 import com.labin.piggybank.domain.TransactionType
 import java.util.Date
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewOperation(
@@ -92,7 +56,8 @@ fun NewOperation(
     navController: NavController,
     transactionViewModel: TransactionViewModel,
     categoryViewModel: CategoryViewModel,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
+    goalViewModel: GoalViewModel = hiltViewModel()
 ) {
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf(TextFieldValue("")) }
@@ -102,6 +67,12 @@ fun NewOperation(
     var selectedDestinationAccountId by remember { mutableStateOf<Long?>(null) }
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
     val isTransfer = selectedType == TransactionType.TRANSFER
+
+    var selectedGoalId by remember { mutableStateOf<Long?>(null) }
+    var showGoalPicker by remember { mutableStateOf(false) }
+    val uiState by goalViewModel.uiState.collectAsStateWithLifecycle()
+
+    val goals = uiState.goals
 
     val snackbarHostState = remember { SnackbarHostState() }
     val saveResult by transactionViewModel.saveResult.collectAsState()
@@ -144,6 +115,7 @@ fun NewOperation(
             DatePicker(state = datePickerState)
         }
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -152,24 +124,14 @@ fun NewOperation(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top=5.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Назад",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+                    Icon(Icons.Default.ArrowBack, "Назад", tint = MaterialTheme.colorScheme.onSurface)
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Новая операция",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Spacer(Modifier.width(8.dp))
+                Text("Новая операция", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
             }
 
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -186,13 +148,11 @@ fun NewOperation(
                         },
                         selected = selectedType == type
                     ) {
-                        Text(
-                            text = when(type) {
-                                TransactionType.EXPENSE -> "Расход"
-                                TransactionType.INCOME -> "Доход"
-                                TransactionType.TRANSFER -> "Перевод"
-                            }
-                        )
+                        Text(text = when(type) {
+                            TransactionType.EXPENSE -> "Расход"
+                            TransactionType.INCOME -> "Доход"
+                            TransactionType.TRANSFER -> "Перевод"
+                        })
                     }
                 }
             }
@@ -218,12 +178,10 @@ fun NewOperation(
                     readOnly = true,
                     enabled = false,
                     label = { Text("Дата операции") },
-                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
                     modifier = Modifier.weight(1f)
                 )
-                Button(onClick = { showDatePicker = true }) {
-                    Text("Выбрать")
-                }
+                Button(onClick = { showDatePicker = true }) { Text("Выбрать") }
             }
 
             OutlinedTextField(
@@ -236,18 +194,14 @@ fun NewOperation(
             )
 
             val sourceAccountName = accounts.find { it.id == selectedAccountId }?.name ?: "Выберите счёт"
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showAccountPicker = true }
-            ) {
+            Box(modifier = Modifier.fillMaxWidth().clickable { showAccountPicker = true }) {
                 OutlinedTextField(
                     value = sourceAccountName,
                     onValueChange = {},
                     readOnly = true,
                     enabled = false,
-                    label = { Text(if (isTransfer) "Счёт отправления" else "Счёт списания") },
-                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                    label = { Text(if (isTransfer) "Счёт отправления" else "Счёт") },
+                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = selectedAccountId == null,
                     singleLine = true
@@ -257,40 +211,25 @@ fun NewOperation(
             if (isTransfer) {
                 var showDestinationPicker by remember { mutableStateOf(false) }
                 val destinationAccountName = accounts.find { it.id == selectedDestinationAccountId }?.name ?: "Выберите счёт"
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showDestinationPicker = true }
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().clickable { showDestinationPicker = true }) {
                     OutlinedTextField(
                         value = destinationAccountName,
                         onValueChange = {},
                         readOnly = true,
                         enabled = false,
                         label = { Text("Счёт зачисления") },
-                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
                         modifier = Modifier.fillMaxWidth(),
                         isError = selectedDestinationAccountId == null || selectedDestinationAccountId == selectedAccountId,
                         singleLine = true
                     )
                 }
-
                 if (selectedAccountId != null && selectedDestinationAccountId == selectedAccountId) {
-                    Text(
-                        "Счета не могут совпадать",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.align(Alignment.Start)
-                    )
+                    Text("Счета не могут совпадать", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
-
                 if (showDestinationPicker) {
                     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                    ModalBottomSheet(
-                        onDismissRequest = { showDestinationPicker = false },
-                        sheetState = sheetState
-                    ) {
+                    ModalBottomSheet(onDismissRequest = { showDestinationPicker = false }, sheetState = sheetState) {
                         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                             Text("Выберите счёт", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -298,10 +237,7 @@ fun NewOperation(
                                     AccountPickerItem(
                                         account = account,
                                         isSelected = account.id == selectedDestinationAccountId,
-                                        onSelect = {
-                                            selectedDestinationAccountId = account.id
-                                            showDestinationPicker = false
-                                        }
+                                        onSelect = { selectedDestinationAccountId = account.id; showDestinationPicker = false }
                                     )
                                 }
                                 item { Spacer(Modifier.height(80.dp)) }
@@ -312,20 +248,28 @@ fun NewOperation(
             }
 
             if (!isTransfer) {
-                Text(
-                    text = "Выберите категорию",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.align(Alignment.Start)
-                )
+                val selectedGoalName = goals.firstOrNull { it.id == selectedGoalId }?.name
+                Box(modifier = Modifier.fillMaxWidth().clickable { showGoalPicker = true }) {
+                    OutlinedTextField(
+                        value = selectedGoalName ?: "Без цели (опционально)",
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = false,
+                        label = { Text("Привязать к цели") },
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+            }
 
+            if (!isTransfer) {
+                Text("Выберите категорию", style = MaterialTheme.typography.titleMedium)
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(categories) { category ->
                         CategoryItem(
@@ -350,6 +294,7 @@ fun NewOperation(
                         description = description.text,
                         destinationAccountId = if (isTransfer) selectedDestinationAccountId else null,
                         type = selectedType,
+                        goalId = selectedGoalId,
                         date = Date(selectedDateMillis ?: System.currentTimeMillis())
                     )
                 },
@@ -366,10 +311,7 @@ fun NewOperation(
             }
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
 
     if (showAccountPicker) {
@@ -377,7 +319,6 @@ fun NewOperation(
         ModalBottomSheet(onDismissRequest = { showAccountPicker = false }, sheetState = sheetState) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Text("Выберите счёт", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
-
                 if (accounts.isEmpty()) {
                     Text("Нет доступных счетов", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
@@ -386,10 +327,37 @@ fun NewOperation(
                             AccountPickerItem(
                                 account = account,
                                 isSelected = account.id == selectedAccountId,
-                                onSelect = {
-                                    selectedAccountId = account.id
-                                    showAccountPicker = false
-                                }
+                                onSelect = { selectedAccountId = account.id; showAccountPicker = false }
+                            )
+                        }
+                        item { Spacer(Modifier.height(80.dp)) }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showGoalPicker) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(onDismissRequest = { showGoalPicker = false }, sheetState = sheetState) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Выберите цель", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+                if (goals.isEmpty()) {
+                    Text("Нет доступных целей", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    OutlinedButton(
+                        onClick = { selectedGoalId = null; showGoalPicker = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Без цели")
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    LazyColumn {
+                        items(goals, key = { it.id }) { goal ->
+                            GoalPickerItem(
+                                goal = goal,
+                                isSelected = goal.id == selectedGoalId,
+                                onSelect = { selectedGoalId = goal.id; showGoalPicker = false }
                             )
                         }
                         item { Spacer(Modifier.height(80.dp)) }
@@ -409,16 +377,8 @@ fun AccountPickerItem(account: Account, isSelected: Boolean, onSelect: () -> Uni
             else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier.size(40.dp).clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
                 Text(account.name.take(1), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -429,6 +389,28 @@ fun AccountPickerItem(account: Account, isSelected: Boolean, onSelect: () -> Uni
                 Text("${account.balance}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 if (isSelected) Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
             }
+        }
+    }
+}
+
+@Composable
+fun GoalPickerItem(goal: FinancialGoal, isSelected: Boolean, onSelect: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onSelect),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
+                Text(goal.name.take(1), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.titleMedium)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(goal.name, style = MaterialTheme.typography.titleMedium)
+                Text("${goal.currentAmount} / ${goal.targetAmount}", style = MaterialTheme.typography.bodySmall, color = LocalContentColor.current.copy(alpha = 0.6f))
+            }
+            if (isSelected) Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -490,7 +472,8 @@ fun NewOperationScreenPreview() {
         navController = rememberNavController(),
         transactionViewModel = hiltViewModel(),
         categoryViewModel = hiltViewModel(),
-        accountViewModel = hiltViewModel()
+        accountViewModel = hiltViewModel(),
+        goalViewModel = hiltViewModel()
     )
 }
 
@@ -501,12 +484,14 @@ fun NewOperationScreen(
     transactionViewModel: TransactionViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = hiltViewModel(),
     accountViewModel: AccountViewModel = hiltViewModel(),
+    goalViewModel: GoalViewModel = hiltViewModel()
 ) {
     NewOperation(
-        userId=userId,
-        navController,
+        userId = userId,
+        navController = navController,
         transactionViewModel = transactionViewModel,
         categoryViewModel = categoryViewModel,
-        accountViewModel = accountViewModel
+        accountViewModel = accountViewModel,
+        goalViewModel = goalViewModel
     )
 }

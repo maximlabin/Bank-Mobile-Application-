@@ -16,16 +16,16 @@ import com.labin.piggybank.viewmodels.DashboardViewModel
 fun HomeScreen(
     navController: NavController,
     viewModel: DashboardViewModel = hiltViewModel(),
-    accountViewModel: AccountViewModel = hiltViewModel()
+    accountViewModel: AccountViewModel = hiltViewModel(),
+    dashboardViewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         uiState = uiState,
         navController = navController,
-        onTypeSelected = { type ->
-            viewModel.setFilterType(type)
-        },
+        onTypeSelected = {},
         accountViewModel = accountViewModel,
+        dashboardViewModel = dashboardViewModel,
     )
 }

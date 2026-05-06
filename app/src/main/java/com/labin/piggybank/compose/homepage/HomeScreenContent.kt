@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CurrencyExchange
@@ -36,6 +37,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -47,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +78,7 @@ import com.labin.piggybank.ui.model.Transaction
 import com.labin.piggybank.domain.TransactionType
 import com.labin.piggybank.utilities.toDisplayString
 import com.labin.piggybank.viewmodels.AccountViewModel
+import com.labin.piggybank.viewmodels.DashboardViewModel
 import java.math.BigDecimal
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -93,6 +97,7 @@ fun HomeScreenPreview() {
         navController = rememberNavController(),
         onTypeSelected = {},
         accountViewModel = hiltViewModel(),
+        dashboardViewModel = hiltViewModel()
     )
 }
 
@@ -101,9 +106,14 @@ fun HomeScreenContent(
     uiState: HomeUiState,
     navController: NavController,
     onTypeSelected: (TransactionType) -> Unit,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
+    dashboardViewModel: DashboardViewModel
 ) {
     val accounts by accountViewModel.accounts.collectAsStateWithLifecycle()
+
+    var showAccountPicker by remember { mutableStateOf(false) }
+
+    val selectedType by dashboardViewModel.selectedType.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -118,10 +128,7 @@ fun HomeScreenContent(
         verticalArrangement = Arrangement.spacedBy(5.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         val options = listOf(TransactionType.EXPENSE, TransactionType.INCOME)
-
-        var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
 
         val balanceText = remember(uiState.balance) {
             uiState.balance.toDisplayString("RUB")
@@ -146,8 +153,8 @@ fun HomeScreenContent(
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                     onClick = {
-                        selectedType = type
-                        onTypeSelected(type)  },
+                        dashboardViewModel.setFilterType(type)
+                    },
                     selected = selectedType == type
                 ) {
                     Text(
@@ -247,6 +254,24 @@ fun HomeScreenContent(
                 cardNumber = uiState.cardNumber,
                 balanceText = balanceText
             )
+
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .clickable { showAccountPicker = true }
+//            ) {
+//                OutlinedTextField(
+//                    value = sourceAccountName,
+//                    onValueChange = {},
+//                    readOnly = true,
+//                    enabled = false,
+//                    label = { Text("") },
+//                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+//                    modifier = Modifier.fillMaxWidth(),
+//                    isError = selectedAccountId == null,
+//                    singleLine = true
+//                )
+//            }
 
             FloatingActionButton(
                 onClick = { navController.navigate("account") },

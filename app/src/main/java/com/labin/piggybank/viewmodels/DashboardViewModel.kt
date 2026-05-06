@@ -11,6 +11,7 @@ import com.labin.piggybank.domain.TransactionType
 import com.labin.piggybank.domain.mapper.CategoryMapper
 import com.labin.piggybank.ui.model.Transaction as UiTransaction
 import com.labin.piggybank.domain.mapper.TransactionMapper
+import com.labin.piggybank.utilities.toTimestampRange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,15 +26,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
-import com.labin.piggybank.utilities.toTimestampRange
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val dateFilterManager: DateFilterManager
 ) : ViewModel() {
-
     private val _selectedType = MutableStateFlow(TransactionType.EXPENSE)
+    val selectedType: StateFlow<TransactionType> = _selectedType
 
     private val dateRangeFlow: Flow<Pair<Long, Long>> =
         dateFilterManager.currentFilter
@@ -49,26 +49,32 @@ class DashboardViewModel @Inject constructor(
                 transactionRepository.getCategoryStats(type, start, end)
                     .map { entities -> CategoryMapper.toPieChartData(entities) }
             }
-            .catch {
-                emit(emptyList<PieChartData>())
+            .catch { e ->
+                Log.e("DashboardVM", "Ошибка загрузки статистики", e)
+                emit(emptyList())
             }
 
     private val balanceFlow: Flow<BigDecimal> =
         dateRangeFlow.flatMapLatest { (start, end) ->
             transactionRepository.getBalanceFlow(start, end)
         }
-            .catch {
+            .catch { e ->
+                Log.e("DashboardVM", "Ошибка загрузки баланса", e)
                 emit(BigDecimal.ZERO)
             }
 
     private val transactionsFlow: Flow<List<UiTransaction>> =
-        _selectedType.flatMapLatest { type ->
-            dateRangeFlow.flatMapLatest { (start, end) ->
-                transactionRepository.getLastTransactions(type, start, end, limit = 200)
+        combine(_selectedType, dateRangeFlow) { type, range ->
+            Triple(type, range.first, range.second)
+        }
+            .flatMapLatest { (type, start, end) ->
+                transactionRepository.getLastTransactions(type, start, end, limit = 50)
                     .map { entities -> TransactionMapper.toUiList(entities) }
             }
-        }
-            .catch { emit(emptyList<UiTransaction>()) }
+            .catch { e ->
+                Log.e("DashboardVM", "Ошибка транзакций", e)
+                emit(emptyList())
+            }
 
     val uiState: StateFlow<HomeUiState> = combine(
         balanceFlow,
@@ -99,7 +105,7 @@ class DashboardViewModel @Inject constructor(
             try {
                 transactionRepository.deleteTransactionById(id)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("DashboardVM", "Не удалось удалить транзакцию $id", e)
             }
         }
     }

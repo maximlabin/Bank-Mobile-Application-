@@ -13,14 +13,14 @@ import java.math.BigDecimal
 interface TransactionDao {
 
     @Query("""
-        SELECT * FROM transactions 
-        WHERE (:type IS NULL OR type = :type)
-          AND transaction_date BETWEEN :startDate AND :endDate
-        ORDER BY transaction_date DESC 
-        LIMIT :limit
-    """)
+    SELECT * FROM transactions 
+    WHERE type = :type 
+      AND transaction_date BETWEEN :startDate AND :endDate
+    ORDER BY transaction_date DESC 
+    LIMIT :limit
+""")
     fun getLastTransactions(
-        type: TransactionType? = null,
+        type: TransactionType,
         startDate: Long,
         endDate: Long,
         limit: Int = 200

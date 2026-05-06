@@ -13,7 +13,8 @@ import javax.inject.Inject
 class TransactionRepository @Inject constructor(
     private val transactionDao: TransactionDao,
     private val accountDao: AccountDao,
-    private val currencyDao: CurrencyDao
+    private val currencyDao: CurrencyDao,
+    private val goalDao: FinancialGoalDao
 ) {
     fun getLastTransactions(
         type: TransactionType,
@@ -92,6 +93,17 @@ class TransactionRepository @Inject constructor(
         )
 
         transactionDao.insert(transaction)
+
+        if (goalId != null) {
+            val delta = when (type) {
+                TransactionType.INCOME -> amount
+                TransactionType.EXPENSE -> -amount
+                TransactionType.TRANSFER -> BigDecimal.ZERO
+            }
+            if (delta != BigDecimal.ZERO) {
+                goalDao.addToGoal(goalId, delta)
+            }
+        }
     }
 
     fun getBalanceFlow(start: Long, end: Long): Flow<BigDecimal> {

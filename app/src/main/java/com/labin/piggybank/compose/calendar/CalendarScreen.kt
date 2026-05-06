@@ -147,7 +147,7 @@ fun SingleDatePicker(
 
     Column {
         Text(
-            text = today.month.getDisplayName(TextStyle.FULL, Locale("ru")),
+            text = getMonthNameNominative(today.month),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -336,7 +336,7 @@ fun SelectionSummary(state: CalendarUiState) {
                     is CalendarSelectionMode.DateRange ->
                         "${state.startDate?.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM")) ?: "—"} — ${state.endDate?.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")) ?: "—"}"
                     is CalendarSelectionMode.Month ->
-                        state.selectedMonth?.getDisplayName(TextStyle.FULL, Locale("ru")) ?: "—"
+                        state.selectedMonth?.let { getMonthNameNominative(it) } ?: "—"
                     is CalendarSelectionMode.Year ->
                         state.selectedYear?.value?.toString() ?: "—"
                 },

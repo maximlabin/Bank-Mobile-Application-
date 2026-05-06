@@ -10,6 +10,7 @@ object TransactionMapper {
         description = entity.description,
         amount = entity.amount,
         type = entity.type,
+        date = entity.transactionDate,
     )
 
     fun toUiList(transactions: List<TransactionEntity>): List<UiTransaction> =

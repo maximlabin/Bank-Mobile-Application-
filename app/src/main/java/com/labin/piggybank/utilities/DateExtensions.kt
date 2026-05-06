@@ -23,8 +23,13 @@ fun CalendarSelectionResult.toTimestampRange(): Pair<Long, Long> {
     val zone = ZoneId.systemDefault()
     return when (this) {
         is CalendarSelectionResult.SingleDate -> {
-            val ts = date.atStartOfDay(zone).toInstant().toEpochMilli()
-            ts to ts
+            val zone = ZoneId.systemDefault()
+            val start = date.atStartOfDay(zone).toInstant().toEpochMilli()
+            val end = date.plusDays(1)
+                .atStartOfDay(zone)
+                .toInstant()
+                .toEpochMilli() - 1
+            start to end
         }
         is CalendarSelectionResult.DateRange -> {
             val start = start.atStartOfDay(zone).toInstant().toEpochMilli()
